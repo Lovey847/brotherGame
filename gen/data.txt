@@ -1,0 +1,2 @@
+images/xor.img
+rooms/test.rm

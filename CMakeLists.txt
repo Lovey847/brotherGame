@@ -207,8 +207,62 @@ endif ()
 # Create config.h
 configure_file("${CMAKE_SOURCE_DIR}/src/config.h.in" "${CMAKE_BINARY_DIR}/config.h")
 
-# Generate required data
-add_subdirectory("${CMAKE_SOURCE_DIR}/gen")
+# Data generation
+file(STRINGS "${CMAKE_SOURCE_DIR}/gen/generators.txt" GENERATOR_LIST)
+
+foreach (GENERATOR ${GENERATOR_LIST})
+	# Only run the generator on directories that end with slashes
+	string(LENGTH ${GENERATOR} GENLENGTH)
+	string(FIND ${GENERATOR} "/" GENSLASH REVERSE)
+	math(EXPR GENVALID "${GENLENGTH}-${GENSLASH}")
+
+	if (GENVALID EQUAL 1)
+		# Run generator in directory
+		string(SUBSTRING ${GENERATOR} 0 ${GENSLASH} GENNAME)
+		string(CONCAT GENTARGET ${GENNAME} "_target")
+		string(CONCAT GENRUNTARGET ${GENTARGET} "_run")
+		
+		message(VERBOSE "Generating ${GENNAME}")
+
+		add_executable(${GENTARGET})
+
+		target_include_directories(${GENTARGET} PRIVATE
+			"${CMAKE_SOURCE_DIR}/gen"
+			"${CMAKE_SOURCE_DIR}/src"
+			"${CMAKE_SOURCE_DIR}/src/plat"
+			"${CMAKE_BINARY_DIR}"
+			)
+		target_sources(${GENTARGET} PRIVATE
+			"${CMAKE_SOURCE_DIR}/gen/${GENNAME}/gen.cpp"
+			"${CMAKE_SOURCE_DIR}/src/plat/mem.cpp"
+			"${CMAKE_SOURCE_DIR}/src/log.cpp"
+			"${CMAKE_SOURCE_DIR}/src/str.cpp"
+			)
+
+		# Platform layers for interfaces
+		if (PLAT_OS_LINUX)
+			target_include_directories(${GENTARGET} PRIVATE
+				"${CMAKE_SOURCE_DIR}/src/plat/linux"
+				)
+			target_sources(${GENTARGET} PRIVATE
+				"${CMAKE_SOURCE_DIR}/gen/linux.cpp"
+				"${CMAKE_SOURCE_DIR}/src/plat/linux/linux_file.cpp"
+				"${CMAKE_SOURCE_DIR}/src/plat/linux/linux_mem.cpp"
+				"${CMAKE_SOURCE_DIR}/src/plat/linux/linux_countTimer.cpp"
+				)
+		else ()
+		endif()
+		
+		add_custom_target(${GENRUNTARGET}
+			COMMAND ${GENTARGET} "${CMAKE_SOURCE_DIR}/gen/${GENNAME}.txt" "${CMAKE_BINARY_DIR}/"
+			WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/gen/${GENNAME}"
+			COMMENT "Generating ${GENNAME}..."
+			SOURCES "${CMAKE_SOURCE_DIR}/gen/${GENNAME}/gen.cpp"
+			)
+
+		add_dependencies(app ${GENRUNTARGET})
+	endif ()
+endforeach ()
 
 # Print include directories, source files and libraries linked
 # Could be helpful in detecting some sort of error

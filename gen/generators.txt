@@ -1,0 +1,8 @@
+# This file contains directories which contain generators for the build
+# process to run before initialization
+#
+# They are run in the order listed in this file
+#
+# Only lines that end with a slash are recognized
+
+data/
