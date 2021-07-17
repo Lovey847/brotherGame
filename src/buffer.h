@@ -93,10 +93,12 @@ public:
 
 	~buffer_t() {
 		// Free current objects in object buffer
+		// Objects should not be active in the buffer at time of destruction
 		for (uptr obj = 0; obj < m_size; ++obj) {
 			if (!m_active[obj]) continue;
 
 			m_buf[obj].~T();
+			log_warning("Object %u was active in buffer!", (u32)obj);
 		}
 		
 		m_m.free(m_buf);

@@ -14,7 +14,10 @@
 #include <cstring>
 
 linux_file_mapping_t::~linux_file_mapping_t() {
-	unmap();
+	linux_file_mapping_t &me = *(linux_file_mapping_t*)this;
+	
+	munmap(me.m_addr, me.m_size);
+	size = (uptr)(data = 0);
 }
 
 ubool linux_file_mapping_t::map(uptr offset, uptr sz, uptr realOffset, uptr realSize,
@@ -48,18 +51,14 @@ ubool linux_file_mapping_t::map(uptr offset, uptr sz, uptr realOffset, uptr real
 }
 
 void file_mapping_t::unmap() {
-	if (data) {
-		linux_file_mapping_t &me = *(linux_file_mapping_t*)this;
+	linux_file_mapping_t &me = *(linux_file_mapping_t*)this;
 
-		munmap(me.m_addr, me.m_size);
-
-		data = NULL;
-		size = 0;
-	}
+	me.m_res->mappings.remove(me);
 }
 
 linux_file_handle_t::~linux_file_handle_t() {
-	close();
+	// I'd like to check for mappings here, but there's not really a way to do that
+	::close(m_fd);
 }
 
 ubool linux_file_handle_t::open(linux_file_res_t &res, const char *filename, file_mode_t mode) {
@@ -88,10 +87,8 @@ ubool linux_file_handle_t::open(linux_file_res_t &res, const char *filename, fil
 void file_handle_t::close() {
 	linux_file_handle_t &me = *(linux_file_handle_t*)this;
 
-	if (me.m_res) {
-		::close(me.m_fd);
-		me.m_res = NULL;
-	}
+	me.m_res->handles.remove(me);
+	me.m_res = NULL;
 }
 
 iptr file_handle_t::read(void *out, uptr bytes) {

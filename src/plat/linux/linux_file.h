@@ -24,6 +24,8 @@ class linux_file_system_t;
 
 class linux_file_mapping_t : public file_mapping_t {
 public:
+	linux_file_res_t *m_res;
+	
 	void *m_addr; // Real mapping address, aligned to page size, used in unmap
 	uptr m_size; // Real mapping size, also used in unmap
 
@@ -52,6 +54,8 @@ public:
 	// Methods
 	FINLINE linux_file_handle_t() : m_res(NULL) {}
 	~linux_file_handle_t();
+
+	linux_file_handle_t(const linux_file_handle_t &other) = delete;
 
 	// Called by linux_file_system_t to open the file after default construction
 	ubool open(linux_file_res_t &res, const char *filename, file_mode_t mode);
@@ -84,6 +88,8 @@ struct linux_file_res_t {
 		// I want a mask to bitwise-and offsets with
 		--pageMask;
 	}
+
+	linux_file_res_t(const linux_file_res_t &other) = delete;
 };
 
 // Linux file system
@@ -95,6 +101,8 @@ public:
 
 	// Methods
 	linux_file_system_t(mem_t &mem);
+
+	linux_file_system_t(const linux_file_system_t &other) = delete;
 
 	// file_handle_t *open(const char *filename, file_mode_t mode);
 	// ubool fileExists(const char *filename);
