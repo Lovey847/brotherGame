@@ -1,0 +1,64 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ******************
+//  PROJECT DEFINES
+// ******************
+
+// Project name, string
+#cmakedefine PROJ_NAME
+
+// Project version, string
+#cmakedefine PROJ_VER
+
+// Project name and version
+#define PROJ_FULL PROJ_NAME PROJ_VER
+
+// ******************
+//  PLATFORM DEFINES
+// ******************
+
+//////////////
+// Endian
+
+// Little endian
+#cmakedefine PLAT_E_LITTLE
+// Big endian
+#cmakedefine PLAT_E_BIG
+
+/////////////////////
+// Operating system
+
+// Windows
+#cmakedefine PLAT_OS_WIN
+// Linux
+#cmakedefine PLAT_OS_LINUX
+
+///////////////
+// Compiler
+
+// GCC (or GNU-based compiler)
+#cmakedefine PLAT_C_GNU
+// MSVC
+#cmakedefine PLAT_C_MSVC
+
+/////////
+// SIMD
+
+// SSE and SSE2
+#cmakedefine PLAT_S_SSE2
+
+//////////////////////
+// Backends
+
+// Render backends
+
+// OpenGL renderer
+#cmakedefine PLAT_B_OPENGL
+
+// Audio backends
+
+// ALSA audio
+#cmakedefine PLAT_B_ALSA
+
+#endif //CONFIG_H
