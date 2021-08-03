@@ -31,6 +31,8 @@ static constexpr atlas_img_t ATLAS_INVALID_IMAGE = 0xffffffffu;
 // Image atlas file format
 static constexpr u32 ATLAS_MAGIC = util_magic('A', 'T', 'L', 'S');
 struct atlas_t {
+  u32 magic; // == ATLAS_MAGIC
+
   endian_u32 imageCount; // Number of images in atlas
 
   // Pointer to atlas image data

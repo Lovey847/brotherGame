@@ -32,10 +32,9 @@ private:
 	GLint m_adjust;
 
 public:
-	gl_render_t(mem_t &m, u32 width, u32 height);
+	gl_render_t(mem_t &m, pak_t &p, u32 width, u32 height);
 	~gl_render_t();
 
-	// delta - Time since last frame was rendered
 	// Returns false if update/resize failed
 	ubool render(const game_state_t &state);
 	ubool resize(u32 width, u32 height);

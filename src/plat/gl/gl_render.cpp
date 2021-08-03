@@ -43,7 +43,7 @@ static const vert verts[] = {
 	{0.5f, -0.5f, endian_little32(0xff0000ff)}
 };
 
-gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
+gl_render_t::gl_render_t(mem_t &m, file_system_t &f, u32 width, u32 height) :
 	m_m(m), m_program(vertexCode, fragmentCode)
 {
 	// Log vendor info

@@ -233,6 +233,7 @@ foreach (GENERATOR ${GENERATOR_LIST})
 			      "${CMAKE_SOURCE_DIR}/gen"
 			      "${CMAKE_SOURCE_DIR}/src"
 			      "${CMAKE_SOURCE_DIR}/src/plat"
+            "${CMAKE_SOURCE_DIR}/src/game"
 			      "${CMAKE_BINARY_DIR}"
 			      )
 		    target_sources(${GENTARGET} PRIVATE

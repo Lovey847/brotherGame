@@ -1,2 +1,1 @@
-images/xor.img
-rooms/test.rm
+atlases/global.atl

@@ -46,6 +46,11 @@ struct pak_ptr_t {
   // Implicit overload for void*
   FINLINE operator void*() {return (void*)((u8*)this+ptr);}
   FINLINE operator const void*() const {return (const void*)((u8*)this+ptr);}
+
+  // Set pak pointer
+  FINLINE void set(void *addr) {
+    ptr = (u8*)addr-(u8*)this;
+  }
 };
 
 // Pak entry ID
