@@ -58,23 +58,27 @@ window_loop_ret_t loop(interfaces_t i, game_t &game) {
 
 int main(int argc, char **argv) {
 	// Initialize everything that stays between resets
+  try {
+    // Interfaces
+    mem_t mem(32*1024*1024); // Allocate 32 mebibytes
+    linux_file_system_t fileSys(mem);
+    timer_t timer;
+    args_t args(argc, argv, mem);
+    game_input_t input;
+    rng_t rng;
+    interfaces_t inter(&mem, &fileSys, &timer, &args, &input, &rng);
 
-	// Interfaces
-	mem_t mem(32*1024*1024); // Allocate 32 mebibytes
-	linux_file_system_t fileSys(mem);
-	timer_t timer;
-	args_t args(argc, argv, mem);
-	game_input_t input;
-	rng_t rng;
-	interfaces_t inter(&mem, &fileSys, &timer, &args, &input, &rng);
+    // Game
+    game_t game(inter, args);
 
-	// Game
-	game_t game(inter, args);
+    // Start main loop
+    window_loop_ret_t ret;
+    while ((ret = loop(inter, game)) == WINDOW_LOOP_RESET);
 
-	// Start main loop
-	window_loop_ret_t ret;
-	while ((ret = loop(inter, game)) == WINDOW_LOOP_RESET);
-
-	// 1 if true, 0 if false
-	return ret == WINDOW_LOOP_FAILED;
+    // 1 if true, 0 if false
+    return ret == WINDOW_LOOP_FAILED;
+  } catch (const log_except_t &err) {
+    log_warning("FATAL ERROR: %s", err.str());
+    return 1;
+  }
 }

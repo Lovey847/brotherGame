@@ -4,8 +4,7 @@
 #include "types.h"
 #include "mem.h"
 #include "opengl.h"
-#include "render.h"
-#include "pak.h"
+#include "game/pak.h"
 #include "log.h"
 
 struct gl_texture_coord_t {

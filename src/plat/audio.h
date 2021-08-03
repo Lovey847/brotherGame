@@ -16,11 +16,10 @@ enum audio_type_t {
 	//          if the order of this enum is changed, change the order of that array as well!
 	
 	// Dummy is always present
-	// TODO: Right now, dummy is the default audio module backend!
-	AUDIO_DUMMY = 0,
 #ifdef PLAT_B_ALSA
 	AUDIO_ALSA,
 #endif
+	AUDIO_DUMMY,
 
 	AUDIO_COUNT
 };

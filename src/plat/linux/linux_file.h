@@ -38,7 +38,7 @@ public:
 	linux_file_mapping_t(const linux_file_mapping_t &other) = delete;
 	
 	// Called by linux_file_handle_t to map portion of file
-	ubool map(uptr offset, uptr sz, uptr realOffset, uptr realSize, int fd, file_mapmode_t mode);
+	ubool map(uptr offset, uptr sz, uptr realOffset, uptr realSize, int fd, file_mapmode_t mode, linux_file_res_t &res);
 
 	// void unmap();
 };

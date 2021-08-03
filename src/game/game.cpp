@@ -1,7 +1,12 @@
 #include "types.h"
 #include "game.h"
 
-game_t::game_t(interfaces_t &i, const args_t &args) : m_i(i), m_a(args) {
+game_t::game_t(interfaces_t &i, const args_t &args) :
+  m_i(i), m_a(args),
+
+  // Check for pak file override
+  m_pak(m_i.mem, m_i.fileSys, m_a.valDef(str_hash("-pak"), "data.pak"))
+{
 	// Allocate game state
 	m_state = (game_state_t*)m_i.mem.alloc(sizeof(game_state_t));
 
@@ -12,6 +17,10 @@ game_t::game_t(interfaces_t &i, const args_t &args) : m_i(i), m_a(args) {
 	// Set x and y
 	m_state->x = 0.f;
 	m_state->y = 0.f;
+
+  // "Map" file for testing
+  const void *test = m_pak.mapEntry(m_pak.getEntry(str_hash("images/xor.img")));;
+  if (!test) throw log_except("Cannot open images/xor.img!");
 }
 
 game_t::~game_t() {

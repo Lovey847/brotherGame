@@ -21,8 +21,11 @@ linux_file_mapping_t::~linux_file_mapping_t() {
 }
 
 ubool linux_file_mapping_t::map(uptr offset, uptr sz, uptr realOffset, uptr realSize,
-								int fd, file_mapmode_t mode)
+                                int fd, file_mapmode_t mode, linux_file_res_t &res)
 {
+  // Get resources
+  m_res = &res;
+
 	// Determine permissions
 	int prot, flags;
 
@@ -172,7 +175,7 @@ file_mapping_t *file_handle_t::map(file_mapmode_t mode, uptr offset, uptr size) 
 	realSize = size + (offset&me.m_res->pageMask);
 
 	linux_file_mapping_t *ret = &me.m_res->mappings.add();
-	if (!ret->map(offset, size, realOffset, realSize, me.m_fd, mode)) {
+	if (!ret->map(offset, size, realOffset, realSize, me.m_fd, mode, *me.m_res)) {
 		log_warning("Cannot map file from %u to %u!", (u32)offset, (u32)offset+size);
 
 		me.m_res->mappings.remove(*ret);

@@ -47,6 +47,6 @@ static ubool dummyConstruct(audio_base_t *out, audio_init_t &args) {
 
 const module_constructProc_t<audio_base_t, audio_init_t> audio_construct[AUDIO_COUNT] = {
 	// WARNING: This list is dependent on the order of audio_type_t in audio.h!
-	DUMMY_CONSTRUCT
 	ALSA_CONSTRUCT
+	DUMMY_CONSTRUCT
 };

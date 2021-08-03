@@ -7,6 +7,7 @@
 #include "key.h"
 #include "game/input.h"
 #include "game/state.h"
+#include "game/pak.h"
 
 // Return value of game_t::update
 enum game_update_ret_t {
@@ -20,6 +21,9 @@ class game_t {
 private:
 	interfaces_t m_i; // Interfaces
 	const args_t &m_a; // Command line arguments
+
+  // Pak file
+  pak_t m_pak;
 
 	// Game state
 	game_state_t *m_state;

@@ -2,35 +2,9 @@
 #define GL_VERTEX_H
 
 #include "types.h"
-#include "render.h"
 #include "gl_texture.h"
 
-// A single vertex is currently 64-bytes, unsure if that's too big for a 2D game or not
 struct gl_vertex_t {
-	vec2_2 pos; // Z & W components hold direction and old direction
-	
-	gl_texture_coord_t coord; // Texture coordinates
-	render_color_t col; // Vertex color
-	render_color_t col2; // Object color
-	render_color_t oldCol2; // Old object color
-	
-	vec2_2 offsetScale;
-	vec2_2 oldOffsetScale;
-	
-	FINLINE const f32 &dir() const {
-		return pos.z;
-	}
-	FINLINE f32 &dir() {
-		return pos.z;
-	}
-
-	FINLINE const f32 &oldDir() const {
-		return pos.w;
-	}
-	FINLINE f32 &oldDir() {
-		return pos.w;
-	}
-
 	FINLINE gl_vertex_t() {}
 
 	FINLINE gl_vertex_t(const gl_texture_t &tex, const render_vertex_t &other) {
