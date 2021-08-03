@@ -115,6 +115,7 @@ target_sources(app PRIVATE
 	  "${CMAKE_SOURCE_DIR}/src/key.cpp"
 	  "${CMAKE_SOURCE_DIR}/src/rng.cpp"
     "${CMAKE_SOURCE_DIR}/src/game/pak.cpp"
+    "${CMAKE_SOURCE_DIR}/src/game/atlas.cpp"
 
 	  # Interfaces
 	  "${CMAKE_SOURCE_DIR}/src/plat/mem.cpp"
@@ -147,6 +148,7 @@ if (PLAT_OS_LINUX)
 		        "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_render.cpp"
 			      "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_shader.cpp"
 			      "${CMAKE_SOURCE_DIR}/src/plat/linux/gl/linux_opengl.cpp"
+            "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_texture.cpp"
 		        )
 		    target_include_directories(app PRIVATE
 			      ${OPENGL_INCLUDE_DIR}

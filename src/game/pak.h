@@ -39,7 +39,13 @@ struct pak_ptr_t {
   endian_u32 ptr;
 
   FINLINE operator T*() {return (T*)((u8*)this+ptr);}
+  FINLINE operator const T*() const {return (const T*)((u8*)this+ptr);}
   FINLINE T *operator->() {return (T*)((u8*)this+ptr);}
+  FINLINE T *operator[](int i) {return *((T*)this + i);}
+
+  // Implicit overload for void*
+  FINLINE operator void*() {return (void*)((u8*)this+ptr);}
+  FINLINE operator const void*() const {return (const void*)((u8*)this+ptr);}
 };
 
 // Pak entry ID

@@ -270,8 +270,6 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 		}
 
 		if (framerate.ready()) {
-			f32 delta = framerate.delta();
-
 			game_update_ret_t ret = game.update();
 			m_i.input.k.update();
 
@@ -282,7 +280,7 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 			case GAME_UPDATE_FAILED: return WINDOW_LOOP_FAILED;
 			}
 
-			if (!m_gl.render(delta, game.state())) return WINDOW_LOOP_FAILED;
+			if (!m_gl.render(game.state())) return WINDOW_LOOP_FAILED;
 			glXSwapBuffers(x.dis, x.win);
 
 			if (!m_m.audio->update()) return WINDOW_LOOP_FAILED;

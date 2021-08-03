@@ -98,9 +98,7 @@ gl_render_t::~gl_render_t() {
 	GLF(GL::DeleteVertexArrays(1, &m_vao));
 }
 
-ubool gl_render_t::render(f32 delta, const game_state_t &state) {
-	(void)delta;
-
+ubool gl_render_t::render(const game_state_t &state) {
 	GLF(GL::Uniform2f(m_adjust, state.x*0.5f, state.y*0.5f));
 	
 	GLF(GL::Clear(GL::COLOR_BUFFER_BIT));

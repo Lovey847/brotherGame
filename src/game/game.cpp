@@ -18,9 +18,14 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 	m_state->x = 0.f;
 	m_state->y = 0.f;
 
-  // "Map" file for testing
-  const void *test = m_pak.mapEntry(m_pak.getEntry(str_hash("images/xor.img")));;
-  if (!test) throw log_except("Cannot open images/xor.img!");
+  // Map file for testing
+  pak_entry_t ent = m_pak.getEntry(str_hash("images/xor.img"));
+  if (ent == PAK_INVALID_ENTRY) throw log_except("Cannot find images/xor.img!");
+
+  const void *test = m_pak.mapEntry(ent);
+  if (!test) throw log_except("Cannot map images/xor.img!");
+
+  m_pak.unmapEntry(ent);
 }
 
 game_t::~game_t() {

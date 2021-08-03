@@ -80,14 +80,15 @@ pak_entry_t pak_t::getEntry(str_hash_t name) {
 const void *pak_t::mapEntry(pak_entry_t ent) {
   if (ent >= entryCount) return NULL;
 
-  // If entry is already mapped, return existing datastore
+  // If entry isn't mapped, map entry
   if (!entries[ent].mapping) {
     entries[ent].mapping = m_pak->map(FILE_MAP_READ, entries[ent].offset, entries[ent].size);
     if (!entries[ent].mapping) return NULL;
+  } else {
+    // Otherwise, increment ref count
+    ++entries[ent].ref;
   }
 
-  // Increment ref count
-  ++entries[ent].ref;
   return entries[ent].mapping->data;
 }
 
@@ -102,6 +103,7 @@ void pak_t::unmapEntry(pak_entry_t ent) {
   // If ref count is greater than 0, decrement ref count
   if (entries[ent].ref) --entries[ent].ref;
   else {
+    // Otherwise, unmap entry
     entries[ent].mapping->unmap();
     entries[ent].mapping = NULL;
   }
