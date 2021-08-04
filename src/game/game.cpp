@@ -9,6 +9,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 {
 	// Allocate game state
 	m_state = (game_state_t*)m_i.mem.alloc(sizeof(game_state_t));
+  memset(m_state, 0, sizeof(game_state_t));
 
 	// Set speed based on -spd parameter
 	m_state->spd = 1.f/60.f;
@@ -17,9 +18,26 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 	// Set x and y
 	m_state->x = 0.f;
 	m_state->y = 0.f;
+
+  // Load global atlas into renderer
+  m_state->r.atlasEnt[ATLAS_GLOBAL] = m_pak.getEntry(str_hash("atlases/global.atl"));
+  if (m_state->r.atlasEnt[ATLAS_GLOBAL] == PAK_INVALID_ENTRY)
+    throw log_except("Cannot find atlases/global.atl!");
+
+  m_state->r.atlas[ATLAS_GLOBAL] = (atlas_t*)m_pak.mapEntry(m_state->r.atlasEnt[ATLAS_GLOBAL]);
+  if (!m_state->r.atlas) throw log_except("Cannot map atlases/global.atl!");
 }
 
 game_t::~game_t() {
+  // Unmap atlases in render state
+  for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
+    if (m_state->r.atlas[i]) {
+      m_pak.unmapEntry(m_state->r.atlasEnt[i]);
+      m_state->r.atlasEnt[i] = PAK_INVALID_ENTRY;
+      m_state->r.atlas[i] = NULL;
+    }
+  }
+
 	// Free game state memory
 	m_i.mem.free(m_state);
 }

@@ -97,5 +97,8 @@ static_assert(sizeof(f32) == 4, "");
 static_assert(sizeof(f64) == 8, "");
 
 static_assert(sizeof(vec4) == 16, "");
+static_assert(sizeof(ivec4) == 16, "");
+static_assert(sizeof(vec2_2) == 16, "");
+static_assert(sizeof(ivec2_2) == 16, "");
 
 #endif //TYPES_H

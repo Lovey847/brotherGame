@@ -7,7 +7,7 @@
 #include "util.h"
 
 // List of image atlases
-enum atlas_id_t {
+enum {
   ATLAS_GLOBAL, // Global atlas, always loaded
   ATLAS_LEVEL, /* Level atlas, switches between levels
                 * Doesn't have any images, since level
@@ -17,6 +17,7 @@ enum atlas_id_t {
 
   ATLAS_COUNT,
 };
+typedef i32 atlas_id_t;
 
 // Image atlas color format, RGBA8
 union atlas_col_t {
@@ -39,7 +40,7 @@ struct atlas_t {
   pak_ptr_t<atlas_col_t> data;
 
   // Pointer to atlas image dimensions
-  pak_ptr_t<endian_ivec4> imgDim;
+  pak_ptr_t<endian_ivec2_2> imgDim;
 
   // Atlas image names
   str_hash_t imgNames[1 /*imageCount*/];

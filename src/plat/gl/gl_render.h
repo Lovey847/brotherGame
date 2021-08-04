@@ -31,8 +31,12 @@ private:
 
 	GLint m_adjust;
 
+  // Duplicate render state, compared with game's render state
+  // to load specific items
+  game_state_render_t m_state;
+
 public:
-	gl_render_t(mem_t &m, pak_t &p, u32 width, u32 height);
+	gl_render_t(mem_t &m, u32 width, u32 height);
 	~gl_render_t();
 
 	// Returns false if update/resize failed

@@ -10,41 +10,43 @@ static const char vertexCode[] =
 	"#version 330 core\n"
 	"\n"
 	"layout(location = 0) in vec2 inPos;\n"
-	"layout(location = 1) in vec4 inCol;\n"
+	"layout(location = 1) in vec2 inCoord;\n"
 	"\n"
 	"uniform vec2 adjust;\n"
 	"\n"
-	"out vec4 col;\n"
+	"out vec2 coord;\n"
 	"\n"
 	"void main() {\n"
 	"    gl_Position = vec4(inPos+adjust, 0.0, 1.0);\n"
-	"    col = inCol;\n"
+	"    coord = inCoord;\n"
 	"}\n";
 
 static const char fragmentCode[] =
 	"#version 330 core\n"
 	"\n"
-	"in vec4 col;\n"
+	"in vec2 coord;\n"
+  "\n"
+  "uniform sampler2D tex;\n"
 	"\n"
 	"out vec4 fragCol;\n"
 	"\n"
 	"void main() {\n"
-	"    fragCol = col;\n"
+	"    fragCol = texture(tex, coord);\n"
 	"}\n";
 
 struct vert {
 	f32 x, y;
-	u32 col;
+	f32 cx, cy;
 };
 
 static const vert verts[] = {
-	{-0.5f, 0.f, endian_little32(0xff00ff00)},
-	{0.5f, 0.5f, endian_little32(0xffff0000)},
-	{0.5f, -0.5f, endian_little32(0xff0000ff)}
+	{-0.5f, 0.f, 0.f, 128.f/1024.f},
+	{0.5f, 0.5f, 256.f/2048.f, 0.f},
+	{0.5f, -0.5f, 256.f/2048.f, 256.f/1024.f}
 };
 
-gl_render_t::gl_render_t(mem_t &m, file_system_t &f, u32 width, u32 height) :
-	m_m(m), m_program(vertexCode, fragmentCode)
+gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
+	m_m(m), m_program(vertexCode, fragmentCode), m_state{}
 {
 	// Log vendor info
 	const char * const vendor = (const char*)GLF(GL::GetString(GL::VENDOR));
@@ -79,8 +81,8 @@ gl_render_t::gl_render_t(mem_t &m, file_system_t &f, u32 width, u32 height) :
 	GLF(GL::BufferData(GL::ARRAY_BUFFER, sizeof(verts), verts, GL::STATIC_DRAW));
 
 	// Set VAO settings
-	GLF(GL::VertexAttribPointer(0, 2, GL::FLOAT, GL_FALSE, sizeof(vert), (void*)0));
-	GLF(GL::VertexAttribPointer(1, GL::BGRA, GL::UNSIGNED_BYTE, GL_TRUE, sizeof(vert), (void*)(sizeof(GLfloat)*2)));
+	GLF(GL::VertexAttribPointer(0, 2, GL::FLOAT, GL::FALSE, sizeof(vert), (void*)0));
+	GLF(GL::VertexAttribPointer(1, 2, GL::FLOAT, GL::FALSE, sizeof(vert), (void*)(sizeof(GLfloat)*2)));
 	GLF(GL::EnableVertexAttribArray(0));
 	GLF(GL::EnableVertexAttribArray(1));
 
@@ -99,6 +101,14 @@ gl_render_t::~gl_render_t() {
 }
 
 ubool gl_render_t::render(const game_state_t &state) {
+  // Check if we should load any atlases
+  for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
+    if (state.r.atlas[i] && (state.r.atlas[i] != m_state.atlas[i])) {
+      m_texture.load(i, state.r.atlas[i]);
+      m_state.atlas[i] = state.r.atlas[i];
+    }
+  }
+
 	GLF(GL::Uniform2f(m_adjust, state.x*0.5f, state.y*0.5f));
 	
 	GLF(GL::Clear(GL::COLOR_BUFFER_BIT));

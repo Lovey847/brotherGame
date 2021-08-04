@@ -528,6 +528,7 @@ namespace GL {
 	VOIDLIB1(Enable,            GLenum)
 	VOIDLIB2(BlendFunc,         GLenum, GLenum)
 	VOIDLIB2(GetIntegerv,       GLenum, GLint*)
+  VOIDLIB5(GetTexImage,       GLenum, GLint, GLenum, GLenum, void*)
 
 	DEFNLIB0(GLenum,         GetError)
 	DEFNLIB1(const GLubyte*, GetString, GLenum)
