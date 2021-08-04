@@ -46,8 +46,6 @@ static endian_ivec4 imgDim[MAXIMG], *curDim = imgDim;
 
 // Read image data from BMP file
 static void readData(file_handle_t *bmp) {
-  static atlas_col_t flippedData[ATLAS_WIDTH*ATLAS_HEIGHT];
-
   bmpHdr_t hdr;
   if (bmp->read(&hdr, sizeof(bmpHdr_t)) < (iptr)sizeof(bmpHdr_t))
     throw log_except("Cannot read %d bytes from BMP!", (int)sizeof(bmpHdr_t));
@@ -60,14 +58,30 @@ static void readData(file_handle_t *bmp) {
       (hdr.planes != 1) ||
       (hdr.bpp != 32)) throw log_except("Invalid BMP header!");
 
-  // File seems good, read data
-  bmp->seek(hdr.offset, FILE_SEEK_SET);
-  if (bmp->read(flippedData, ATLAS_WIDTH*ATLAS_HEIGHT*4) < ATLAS_WIDTH*ATLAS_HEIGHT*4)
-    throw log_except("Cannot read BMP image data!");
+  // File seems good, map data
+  file_mapping_t *flippedMapping = bmp->map(FILE_MAP_READ, hdr.offset, ATLAS_WIDTH*ATLAS_HEIGHT*4);
+  if (!flippedMapping)
+    throw log_except("Cannot map BMP image data!");
+
+  const atlas_col_t *flippedData = (const atlas_col_t*)(flippedMapping->data);
 
   // Flip data vertically
-  for (uptr i = 0; i < ATLAS_HEIGHT; ++i)
-    memcpy(data + ATLAS_WIDTH*i, flippedData + ATLAS_WIDTH*(ATLAS_HEIGHT-1-i), ATLAS_WIDTH*4);
+  for (uptr i = 0; i < ATLAS_HEIGHT; ++i) {
+    u8 tmp;
+    atlas_col_t *ptr1 = data + i*ATLAS_WIDTH;
+    const atlas_col_t *ptr2 = flippedData + (ATLAS_HEIGHT-1-i)*ATLAS_WIDTH;
+
+    memcpy(ptr1, ptr2, ATLAS_WIDTH*4);
+
+    // Atlas image data is in RGBA, convert BMP's BGRA to RGBA
+    for (uptr x = 0; x < ATLAS_WIDTH; ++x) {
+      tmp = ptr1[x].c[0];
+      ptr1[x].c[0] = ptr1[x].c[2];
+      ptr1[x].c[2] = tmp;
+    }
+  }
+
+  flippedMapping->unmap();
 }
 
 // Read line from atlas.txt

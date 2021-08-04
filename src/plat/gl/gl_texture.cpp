@@ -4,8 +4,9 @@
 #include "game/atlas.h"
 #include "gl_texture.h"
 
-const ivec2_2 gl_texture_atlasOffset[ATLAS_COUNT] = {
-  ivec2_2(0, 0, 0, 0), ivec2_2(ATLAS_WIDTH, 0, 0, 0)
+const vec2_2 gl_texture_atlasOffset[ATLAS_COUNT] = {
+  vec2_2(0.f, 0.f, 0.f, 0.f),
+  vec2_2((f32)ATLAS_WIDTH/(f32)GLTEXTURE_WIDTH, 0.f, 0.f, 0.f)
 };
 
 gl_texture_t::gl_texture_t() :
@@ -33,18 +34,23 @@ gl_texture_t::~gl_texture_t() {
   GLF(GL::DeleteTextures(1, &m_tex));
 }
 
-ivec2_2 gl_texture_t::imgCoord(atlas_id_t atlas, str_hash_t name) {
+vec2_2 gl_texture_t::imgCoord(atlas_id_t atlas, str_hash_t name) const {
+  // Atlas coordinate normalizer
+  static const vec2_2 normMul(1.f/(f32)GLTEXTURE_WIDTH, 1.f/(f32)GLTEXTURE_HEIGHT,
+                              1.f/(f32)GLTEXTURE_WIDTH, 1.f/(f32)GLTEXTURE_HEIGHT);
+
   // If there's no atlas in this spot, return zeros
-  if (!m_atlas[atlas]) return ivec4(0);
+  if (!m_atlas[atlas]) return vec2_2(0.f);
 
   // Search atlas image names
   for (uptr i = m_atlas[atlas]->imageCount; i--;) {
+    // atlas imgDim, normalized
     if (m_atlas[atlas]->imgNames[i] == name) {
-      return gl_texture_atlasOffset[atlas]+m_atlas[atlas]->imgDim[i].v();
+      return gl_texture_atlasOffset[atlas]+vec4_ivec4(m_atlas[atlas]->imgDim[i].v())*normMul;
     }
   }
 
-  return ivec4(0);
+  return vec2_2(0.f);
 }
 
 ubool gl_texture_t::load(atlas_id_t id, const atlas_t *atlas) {

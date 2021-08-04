@@ -39,14 +39,14 @@ struct vert {
 	f32 cx, cy;
 };
 
-static const vert verts[] = {
+static vert verts[] = {
 	{-0.5f, 0.f, 0.f, 128.f/1024.f},
 	{0.5f, 0.5f, 256.f/2048.f, 0.f},
 	{0.5f, -0.5f, 256.f/2048.f, 256.f/1024.f}
 };
 
 gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
-	m_m(m), m_program(vertexCode, fragmentCode), m_state{}
+	m_m(m), m_program(vertexCode, fragmentCode)
 {
 	// Log vendor info
 	const char * const vendor = (const char*)GLF(GL::GetString(GL::VENDOR));
@@ -103,9 +103,8 @@ gl_render_t::~gl_render_t() {
 ubool gl_render_t::render(const game_state_t &state) {
   // Check if we should load any atlases
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
-    if (state.r.atlas[i] && (state.r.atlas[i] != m_state.atlas[i])) {
+    if (state.r.atlas[i] && (state.r.atlas[i] != m_texture.atlas(i))) {
       m_texture.load(i, state.r.atlas[i]);
-      m_state.atlas[i] = state.r.atlas[i];
     }
   }
 

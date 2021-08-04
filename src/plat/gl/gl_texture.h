@@ -10,7 +10,7 @@ static constexpr u32 GLTEXTURE_WIDTH = ATLAS_WIDTH*2;
 static constexpr u32 GLTEXTURE_HEIGHT = ATLAS_HEIGHT;
 
 // Atlas offset list
-extern const ivec2_2 gl_texture_atlasOffset[ATLAS_COUNT];
+extern const vec2_2 gl_texture_atlasOffset[ATLAS_COUNT];
 
 class gl_texture_t {
 private:
@@ -23,9 +23,14 @@ public:
   gl_texture_t();
   ~gl_texture_t();
 
+  // Get atlas from texture
+  FINLINE const atlas_t *atlas(atlas_id_t id) const {
+    return m_atlas[id];
+  }
+
   // Get image offset in texture
-  // z&w contain width and height
-  ivec2_2 imgCoord(atlas_id_t atlas, str_hash_t name);
+  // 01 contains texture position, 23 contains texture size
+  vec2_2 imgCoord(atlas_id_t atlas, str_hash_t name) const;
 
   // Load atlas into texture
   // Overwrites previous atlas in spot
