@@ -3,21 +3,20 @@
 
 #include "gl_render.h"
 #include "gl_shader.h"
+#include "gl_buffer.h"
 #include "gl_glf.h"
 
 // NOTE: Think of a better system for shaders at some point!
 static const char vertexCode[] =
 	"#version 330 core\n"
 	"\n"
-	"layout(location = 0) in vec2 inPos;\n"
+	"layout(location = 0) in vec4 inPos;\n"
 	"layout(location = 1) in vec2 inCoord;\n"
-	"\n"
-	"uniform vec2 adjust;\n"
 	"\n"
 	"out vec2 coord;\n"
 	"\n"
 	"void main() {\n"
-	"    gl_Position = vec4(inPos+adjust, 0.0, 1.0);\n"
+	"    gl_Position = inPos;\n"
 	"    coord = inCoord;\n"
 	"}\n";
 
@@ -34,19 +33,14 @@ static const char fragmentCode[] =
 	"    fragCol = texture(tex, coord);\n"
 	"}\n";
 
-struct vert {
-	f32 x, y;
-	f32 cx, cy;
-};
-
-static vert verts[] = {
-	{-0.5f, 0.f, 0.f, 128.f/1024.f},
-	{0.5f, 0.5f, 256.f/2048.f, 0.f},
-	{0.5f, -0.5f, 256.f/2048.f, 256.f/1024.f}
+static const gl_vertex_t verts[] = {
+  {vec4(-0.5f, 0.f, 0.f, 1.f), vec2_2(0.f, 128.f/(float)GLTEXTURE_HEIGHT, 0.f, 0.f)},
+  {vec4(0.5f, 0.5f, 0.f, 1.f), vec2_2(256.f/(float)GLTEXTURE_WIDTH, 0.f, 0.f, 0.f)},
+  {vec4(0.5f, -0.5f, 0.f, 1.f), vec2_2(256.f/(float)GLTEXTURE_WIDTH, 256.f/(float)GLTEXTURE_HEIGHT, 0.f, 0.f)}
 };
 
 gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
-	m_m(m), m_program(vertexCode, fragmentCode)
+	m_m(m), m_program(vertexCode, fragmentCode), m_buf(m, 2048, 3072)
 {
 	// Log vendor info
 	const char * const vendor = (const char*)GLF(GL::GetString(GL::VENDOR));
@@ -61,43 +55,18 @@ gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
 			 "GLSL version:    %s",
 
 			 vendor, renderer, version, glslVersion);
-	
-	// Get "adjust" uniform
-	m_adjust = GLF(GL::GetUniformLocation(m_program.obj(), "adjust"));
-	
+
 	// Set clear color
 	GLF(GL::ClearColor(0.f, 0.f, 0.f, 0.f));
 
 	// Set viewport
 	resize(width, height);
 
-	// Make VAO
-	GLF(GL::GenVertexArrays(1, &m_vao));
-	GLF(GL::BindVertexArray(m_vao));
-
-	// Make VBO
-	GLF(GL::GenBuffers(1, &m_vbo));
-	GLF(GL::BindBuffer(GL::ARRAY_BUFFER, m_vbo));
-	GLF(GL::BufferData(GL::ARRAY_BUFFER, sizeof(verts), verts, GL::STATIC_DRAW));
-
-	// Set VAO settings
-	GLF(GL::VertexAttribPointer(0, 2, GL::FLOAT, GL::FALSE, sizeof(vert), (void*)0));
-	GLF(GL::VertexAttribPointer(1, 2, GL::FLOAT, GL::FALSE, sizeof(vert), (void*)(sizeof(GLfloat)*2)));
-	GLF(GL::EnableVertexAttribArray(0));
-	GLF(GL::EnableVertexAttribArray(1));
-
 	// Use shader
 	m_program.use();
 }
 
 gl_render_t::~gl_render_t() {
-	// Destroy VBO
-	GLF(GL::BindBuffer(GL::ARRAY_BUFFER, 0));
-	GLF(GL::DeleteBuffers(1, &m_vbo));
-
-	// Destroy VAO
-	GLF(GL::BindVertexArray(0));
-	GLF(GL::DeleteVertexArrays(1, &m_vao));
 }
 
 ubool gl_render_t::render(const game_state_t &state) {
@@ -108,10 +77,20 @@ ubool gl_render_t::render(const game_state_t &state) {
     }
   }
 
-	GLF(GL::Uniform2f(m_adjust, state.x*0.5f, state.y*0.5f));
-	
-	GLF(GL::Clear(GL::COLOR_BUFFER_BIT));
-	GLF(GL::DrawArrays(GL::TRIANGLES, 0, 3));
+  gl_vertex_t v[3];
+  memcpy((void*)v, verts, sizeof(verts));
+
+  for (uptr i = 0; i < sizeof(v)/sizeof(v[0]); ++i) {
+    v[i].pos.f[0] += state.x;
+    v[i].pos.f[1] += state.y;
+  }
+
+  GLF(GL::Clear(GL_COLOR_BUFFER_BIT));
+
+  // Add verts triangle
+  m_buf.addTriangle(v);
+
+  m_buf.flushBuffers();
 
 	return true;
 }

@@ -5,10 +5,8 @@
 #include "gl_texture.h"
 
 struct gl_vertex_t {
-  
+  vec4 pos;
+  vec2_2 coord;
 };
-
-// Make sure we're correct in our size assessment here
-static_assert(sizeof(gl_vertex_t) == 64, "");
 
 #endif //GL_VERTEX_H

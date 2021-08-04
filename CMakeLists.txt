@@ -149,6 +149,7 @@ if (PLAT_OS_LINUX)
 			      "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_shader.cpp"
 			      "${CMAKE_SOURCE_DIR}/src/plat/linux/gl/linux_opengl.cpp"
             "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_texture.cpp"
+            "${CMAKE_SOURCE_DIR}/src/plat/gl/gl_buffer.cpp"
 		        )
 		    target_include_directories(app PRIVATE
 			      ${OPENGL_INCLUDE_DIR}

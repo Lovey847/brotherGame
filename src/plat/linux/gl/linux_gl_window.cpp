@@ -69,7 +69,7 @@ linux_gl_window_t::x_t::x_t() {
 	XSetWindowAttributes attribs;
 	attribs.colormap = cmap;
 	attribs.border_pixel = 0;
-	attribs.event_mask = KeyPressMask|KeyReleaseMask;
+	attribs.event_mask = KeyPressMask|KeyReleaseMask|StructureNotifyMask;
 
 	win = XCreateWindow(dis, root, // Display and parent window
 						0, 0, // Position of window, usually ignored
@@ -221,6 +221,7 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 	XEvent evt;
 	rate_t framerate(m_i.timer, 60);
 	unsigned int lastPressed = 0; // Last keycode pressed, detects autorepeat
+  int width, height;
 
 	for (;;) {
 		while (XPending(x.dis)) {
@@ -264,7 +265,23 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 					if (c != KEYC_NONE) m_i.input.k.release(c);
 				}
 
-				// fall through
+        break;
+
+      case ConfigureNotify:
+        // Has the window changed size?
+        if ((width != evt.xconfigure.width) ||
+            (height != evt.xconfigure.height))
+        {
+          width = evt.xconfigure.width;
+          height = evt.xconfigure.height;
+
+          m_gl.resize(width, height);
+
+          log_note("Resized");
+        }
+
+        break;
+
 			default: break;
 			}
 		}

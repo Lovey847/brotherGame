@@ -8,6 +8,7 @@
 #include "opengl.h"
 #include "gl_shader.h"
 #include "gl_texture.h"
+#include "gl_buffer.h"
 
 class gl_render_t {
 private:
@@ -27,9 +28,7 @@ private:
 
   gl_texture_t m_texture;
 
-	GLuint m_vao, m_vbo;
-
-	GLint m_adjust;
+  gl_buffers_t m_buf;
 
 public:
 	gl_render_t(mem_t &m, u32 width, u32 height);
