@@ -50,6 +50,8 @@ gl_buffers_t::~gl_buffers_t() {
 void gl_buffers_t::addVerts(uptr vertCount, const gl_vertex_t *verts,
                             uptr indCount, const u16 *inds)
 {
+  if (!(vertCount+indCount)) return;
+
   if (m_curVert+vertCount > m_vertCount)
     throw log_except("Out of vertex memory! (%u > %u)",
                      (unsigned)(m_curVert+vertCount),

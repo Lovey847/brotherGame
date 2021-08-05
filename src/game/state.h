@@ -27,12 +27,22 @@ struct game_state_render_t {
   const atlas_t *atlas[ATLAS_COUNT];
 };
 
+// Cube in world
+struct game_state_cube_t {
+  vec4 min, max;
+};
+
 // Game state struct
 struct game_state_t {
   game_state_win_t w; // Window state
   game_state_render_t r; // Render state
 
-  f32 x, y, spd;
+  vec4 pos;
+
+  game_state_cube_t cube;
+
+  f32 fovx; // Horizontal field of view
+  f32 fovy; // Vertical field of view
 
   // Atlas pak entries
   // Used to unmap the atlas entries, initialized to PAK_INVALID_ENTRY

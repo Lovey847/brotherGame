@@ -14,13 +14,16 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   // Set module-state back pointers
   m_state->r.game = m_state;
 
-	// Set speed based on -spd parameter
-	m_state->spd = 1.f/60.f;
-	if (m_a.check(str_hash("-spd"))) m_state->spd *= 8.f;
+  // Set position
+	m_state->pos = vec4(0.f, 0.f, 0.f, 1.f);
 
-	// Set x and y
-	m_state->x = 0.f;
-	m_state->y = 0.f;
+  // Set cube position
+  m_state->cube.min = vec4(-128.f, 128.f, -128.f, 1.f);
+  m_state->cube.max = vec4(128.f, 384.f, 128.f, 1.f);
+
+  // Set FOV, based on command-line parameters
+  m_state->fovx = str_strnum<f32>(m_a.valDef(str_hash("-fov"), "120"));
+  m_state->fovy = m_state->fovx * (9.f/16.f);
 
   // Initialize atlasEnt
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i)
@@ -49,14 +52,11 @@ game_t::~game_t() {
 
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
-  if (m_i.input.k.down[KEYC_M_PRIMARY]) {
-    m_state->x = (f32)m_i.input.mx/(f32)m_state->w.width*2.f-1.f;
-    m_state->y = (f32)m_i.input.my/(f32)m_state->w.height*-2.f+1.f;
-  }
-  if (m_i.input.k.down[KEYC_M_MIDDLE]) {
-    m_state->w.width += 1;
-    m_state->w.height += 1;
-  }
-	
+
+  if (m_i.input.k.pressed[KEYC_W]) ++m_state->pos.f[2];
+  if (m_i.input.k.pressed[KEYC_S]) --m_state->pos.f[2];
+  if (m_i.input.k.pressed[KEYC_A]) --m_state->pos.f[0];
+  if (m_i.input.k.pressed[KEYC_D]) ++m_state->pos.f[0];
+
 	return GAME_UPDATE_CONTINUE;
 }

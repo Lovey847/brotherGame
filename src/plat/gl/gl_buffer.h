@@ -5,6 +5,13 @@
 #include "opengl.h"
 #include "gl_vertex.h"
 
+struct gl_buffer_block_t {
+  // NOTE: All matrices are column-major,
+  // so access them like "projection[column][row]"
+  f32 modelView[4][4];
+  f32 projection[4][4];
+};
+
 class gl_buffers_t {
 private:
   mem_t &m_m;
@@ -16,7 +23,7 @@ private:
   uptr m_vertSize, m_indSize;
   uptr m_curVert, m_curInd;
 
-  GLuint m_vao, m_vbo, m_ebo;
+  GLuint m_vao, m_vbo, m_ebo, m_ubo;
 
 public:
   gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount);

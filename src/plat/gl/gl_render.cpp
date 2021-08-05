@@ -78,18 +78,7 @@ ubool gl_render_t::render(game_state_render_t &state) {
     }
   }
 
-  gl_vertex_t v[3];
-  memcpy((void*)v, verts, sizeof(verts));
-
-  for (uptr i = 0; i < sizeof(v)/sizeof(v[0]); ++i) {
-    v[i].pos.f[0] += state.game->x;
-    v[i].pos.f[1] += state.game->y;
-  }
-
   GLF(GL::Clear(GL_COLOR_BUFFER_BIT));
-
-  // Add verts triangle
-  m_buf.addTriangle(v);
 
   m_buf.flushBuffers();
 
