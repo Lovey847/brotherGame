@@ -57,10 +57,20 @@ game_t::~game_t() {
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
-  if (m_i.input.k.down[KEYC_W]) m_state->pos.f[2] += 4.f;
-  if (m_i.input.k.down[KEYC_S]) m_state->pos.f[2] -= 4.f;
-  if (m_i.input.k.down[KEYC_A]) m_state->pos.f[0] -= 4.f;
-  if (m_i.input.k.down[KEYC_D]) m_state->pos.f[0] += 4.f;
+  if (m_i.input.k.down[KEYC_LEFT]) m_state->yaw += (f32)M_PI/60.f;
+  if (m_i.input.k.down[KEYC_RIGHT]) m_state->yaw -= (f32)M_PI/60.f;
+  if (m_i.input.k.down[KEYC_UP]) m_state->pitch += (f32)M_PI/60.f;
+  if (m_i.input.k.down[KEYC_DOWN]) m_state->pitch -= (f32)M_PI/60.f;
+
+  const f32 c = cosf(m_state->yaw);
+  const f32 s = sinf(m_state->yaw);
+
+  const vec4 forward = vec4(c, 0.f, s, 0.f);
+
+  if (m_i.input.k.down[KEYC_W]) m_state->pos += forward*4.f;
+  if (m_i.input.k.down[KEYC_S]) m_state->pos -= forward*4.f;
+  if (m_i.input.k.down[KEYC_A]) m_state->pos += forward.shuffle<0x2103>()*vec4(-4.f, 4.f, 4.f, 4.f);
+  if (m_i.input.k.down[KEYC_D]) m_state->pos += forward.shuffle<0x2103>()*vec4(4.f, 4.f, -4.f, 4.f);;
   if (m_i.input.k.down[KEYC_SPACE]) m_state->pos.f[1] += 4.f;
   if (m_i.input.k.down[KEYC_LCTRL]) m_state->pos.f[1] -= 4.f;
 

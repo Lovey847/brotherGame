@@ -152,8 +152,14 @@ ubool gl_render_t::render(game_state_render_t &state) {
   // Setup model view matrix
   memcpy((void*)m_buf.block().modelView, &identMat, sizeof(identMat));
 
-  m_buf.block().modelView[3] = -state.game->pos;
-  m_buf.block().modelView[3].f[3] = 1.f;
+  // The origin of the yaw is pointing right
+  const f32 c = cosf(state.game->yaw-(f32)M_PI*0.5f);
+  const f32 s = sinf(state.game->yaw-(f32)M_PI*0.5f);
+
+  m_buf.block().modelView[0] = vec4(c, 0.f, -s, 0.f);
+  m_buf.block().modelView[2] = vec4(s, 0.f, c, 0.f);
+  m_buf.block().modelView[3] = (-state.game->pos*vec4(c, 1.f, c, -1.f) +
+                                -state.game->pos.shuffle<0x2103>()*vec4(s, 0.f, -s, 0.f));
 
   // Add game cubes
   m_buf.addCube(m_texture, state.game->pos, state.game->cube);

@@ -41,6 +41,9 @@ struct game_state_t {
   cube_t cube; // TEMP
 
   f32 fovy; // Vertical field of view
+
+  f32 yaw; // Player camera yaw
+  f32 pitch; // Player camera pitch
 };
 
 #endif //GAME_STATE_H
