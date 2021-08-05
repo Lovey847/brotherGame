@@ -23,25 +23,24 @@ struct game_state_win_t {
 struct game_state_render_t {
   const game_state_t *game;
 
-  // Used to load atlas into renderer
-  // Set to NULL when renderer loads atlas
+  // Used to load atlases into renderer
+  // Set to NULL when atlas is loaded
   const atlas_t *atlas[ATLAS_COUNT];
 };
 
 // Game state struct
+static constexpr uptr STATE_MAXCUBES = 256;
 struct game_state_t {
   game_state_win_t w; // Window state
   game_state_render_t r; // Render state
 
   vec4 pos;
 
-  cube_t cube;
+  uptr cubeCnt;
+  cube_t cubes[STATE_MAXCUBES];
+  cube_t cube; // TEMP
 
   f32 fovy; // Vertical field of view
-
-  // Atlas pak entries
-  // Used to unmap the atlas entries, initialized to PAK_INVALID_ENTRY
-  pak_entry_t atlasEnt[ATLAS_COUNT];
 };
 
 #endif //GAME_STATE_H

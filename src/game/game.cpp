@@ -22,30 +22,31 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   // Set cube properties
   m_state->cube.min = vec4(-128.f, -384.f, -128.f, 1.f);
   m_state->cube.max = vec4(128.f, -128.f, 128.f, 1.f);
-  m_state->cube.img = str_hash("xor");
+  m_state->cube.img = str_hash("tutorial");
 
   // Set FOV, based on command-line parameters
+  // NOTE: No error checking is done here!
   const f32 fov = str_strnum<f32>(m_a.valDef(str_hash("-fov"), "120"))*((f32)M_PI/180.f);
   m_state->fovy = fov * (9.f/16.f);
 
   // Initialize atlasEnt
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i)
-    m_state->atlasEnt[i] = PAK_INVALID_ENTRY;
+    m_atlasEnt[i] = PAK_INVALID_ENTRY;
 
   // Load global atlas into renderer
-  m_state->atlasEnt[ATLAS_GLOBAL] = m_pak.getEntry(str_hash("atlases/global.atl"));
-  if (m_state->atlasEnt[ATLAS_GLOBAL] == PAK_INVALID_ENTRY)
+  m_atlasEnt[ATLAS_GLOBAL] = m_pak.getEntry(str_hash("atlases/global.atl"));
+  if (m_atlasEnt[ATLAS_GLOBAL] == PAK_INVALID_ENTRY)
     throw log_except("Cannot find atlases/global.atl!");
 
-  m_state->r.atlas[ATLAS_GLOBAL] = (atlas_t*)m_pak.mapEntry(m_state->atlasEnt[ATLAS_GLOBAL]);
+  m_state->r.atlas[ATLAS_GLOBAL] = (atlas_t*)m_pak.mapEntry(m_atlasEnt[ATLAS_GLOBAL]);
   if (!m_state->r.atlas) throw log_except("Cannot map atlases/global.atl!");
 }
 
 game_t::~game_t() {
   // Unmap atlases in render state
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
-    if (m_state->atlasEnt[i] != PAK_INVALID_ENTRY) {
-      m_pak.unmapEntry(m_state->atlasEnt[i]);
+    if (m_atlasEnt[i] != PAK_INVALID_ENTRY) {
+      m_pak.unmapEntry(m_atlasEnt[i]);
     }
   }
 

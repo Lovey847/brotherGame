@@ -96,7 +96,7 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   const f32 invAspect = (f32)height/(f32)width;
 
   // Distance to projection plane
-  const f32 projDist = 1.f/tanf(s.fovy*0.5f);
+  m_projDist = 1.f/tanf(s.fovy*0.5f);
 
   // Near clipping plane distance
   static const f32 nearClip = 32.f;
@@ -104,8 +104,8 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   // Far clipping plane distance
   static const f32 farClip = 2048.f;
 
-  m_buf.block().projection[0].f[0] = projDist*invAspect;
-  m_buf.block().projection[1].f[1] = projDist;
+  m_buf.block().projection[0].f[0] = m_projDist*invAspect;
+  m_buf.block().projection[1].f[1] = m_projDist;
   m_buf.block().projection[2] = vec4(0.f, 0.f, (farClip+nearClip*2.f)/farClip, 1.f);
   m_buf.block().projection[3] = vec4(0.f, 0.f, nearClip*-2.f, 0.f);
 
@@ -166,6 +166,9 @@ ubool gl_render_t::render(game_state_render_t &state) {
 }
 
 ubool gl_render_t::resize(u32 width, u32 height) {
+  // Resize projection matrix
+  m_buf.block().projection[0].f[0] = (f32)height/(f32)width*m_projDist;
+
 	GLF(GL::Viewport(0, 0, width, height));
 
 	return true;

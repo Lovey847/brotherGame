@@ -30,6 +30,8 @@ private:
 
   gl_buffers_t m_buf;
 
+  f32 m_projDist; // Distance to the projection plane, used when resizing the window
+
 public:
 	gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height);
 	~gl_render_t();

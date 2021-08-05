@@ -28,6 +28,9 @@ private:
 	// Game state
 	game_state_t *m_state;
 
+  // Atlas pak entries (used for unmapping atlases)
+  pak_entry_t m_atlasEnt[ATLAS_COUNT];
+
 public:
 	// i: Interfaces
 	// argc/argv: Command line arguments
