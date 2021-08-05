@@ -39,6 +39,12 @@ public:
 
 	// Get game state struct
 	FINLINE const game_state_t &state() const {return *m_state;}
+
+  // Get mutable game window state struct
+  FINLINE game_state_win_t &wstate() {return m_state->w;}
+
+  // Get mutable game render state struct
+  FINLINE game_state_render_t &rstate() {return m_state->r;}
 };
 
 #endif //GAME_H

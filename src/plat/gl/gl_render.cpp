@@ -69,11 +69,12 @@ gl_render_t::gl_render_t(mem_t &m, u32 width, u32 height) :
 gl_render_t::~gl_render_t() {
 }
 
-ubool gl_render_t::render(const game_state_t &state) {
+ubool gl_render_t::render(game_state_render_t &state) {
   // Check if we should load any atlases
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
-    if (state.r.atlas[i] && (state.r.atlas[i] != m_texture.atlas(i))) {
-      m_texture.load(i, state.r.atlas[i]);
+    if (state.atlas[i]) {
+      m_texture.load(i, state.atlas[i]);
+      state.atlas[i] = NULL;
     }
   }
 
@@ -81,8 +82,8 @@ ubool gl_render_t::render(const game_state_t &state) {
   memcpy((void*)v, verts, sizeof(verts));
 
   for (uptr i = 0; i < sizeof(v)/sizeof(v[0]); ++i) {
-    v[i].pos.f[0] += state.x;
-    v[i].pos.f[1] += state.y;
+    v[i].pos.f[0] += state.game->x;
+    v[i].pos.f[1] += state.game->y;
   }
 
   GLF(GL::Clear(GL_COLOR_BUFFER_BIT));
@@ -99,8 +100,4 @@ ubool gl_render_t::resize(u32 width, u32 height) {
 	GLF(GL::Viewport(0, 0, width, height));
 
 	return true;
-}
-
-void interpEntities(ubool interp) {
-	(void)interp;
 }

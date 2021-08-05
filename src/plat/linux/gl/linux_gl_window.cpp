@@ -69,7 +69,10 @@ linux_gl_window_t::x_t::x_t() {
 	XSetWindowAttributes attribs;
 	attribs.colormap = cmap;
 	attribs.border_pixel = 0;
-	attribs.event_mask = KeyPressMask|KeyReleaseMask|StructureNotifyMask;
+	attribs.event_mask =
+    KeyPressMask|KeyReleaseMask|
+    ButtonPressMask|ButtonReleaseMask|PointerMotionMask|
+    StructureNotifyMask;
 
 	win = XCreateWindow(dis, root, // Display and parent window
 						0, 0, // Position of window, usually ignored
@@ -221,7 +224,22 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 	XEvent evt;
 	rate_t framerate(m_i.timer, 60);
 	unsigned int lastPressed = 0; // Last keycode pressed, detects autorepeat
-  int width, height;
+  u32 width, height;
+
+  XWindowAttributes attribs;
+  XGetWindowAttributes(x.dis, x.win, &attribs);
+  game.wstate().width = width = attribs.width;
+  game.wstate().height = height = attribs.height;
+
+  // For ButtonPress and ButtonRelease events
+  static const key_code_t mouseKeys[] = {
+    KEYC_NONE, // Buttons start at 1
+    KEYC_M_PRIMARY, // Left click (yeah I'm assuming you're right handed)
+    KEYC_M_MIDDLE, // Middle click
+    KEYC_M_SECONDARY, // Right click
+    KEYC_M_SCROLLUP, // Mouse wheel up
+    KEYC_M_SCROLLDOWN, // Mouse wheel down
+  };
 
 	for (;;) {
 		while (XPending(x.dis)) {
@@ -240,9 +258,9 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 				
 				// Loop through keysyms for keycode
 				for (const KeySym
-						 *kEnd = m_map + (evt.xkey.keycode-m_minCode + 1)*m_symPerCode,
-						 *k = kEnd - m_symPerCode;
-					 k != kEnd; ++k)
+               *kEnd = m_map + (evt.xkey.keycode-m_minCode + 1)*m_symPerCode,
+               *k = kEnd - m_symPerCode;
+             k != kEnd; ++k)
 				{
 					key_code_t c = getCodeFromSym(*k);
 
@@ -256,9 +274,9 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 				if (evt.xkey.keycode == lastPressed) lastPressed = 0;
 				
 				for (const KeySym
-						 *kEnd = m_map + (evt.xkey.keycode-m_minCode + 1)*m_symPerCode,
-						 *k = kEnd - m_symPerCode;
-					 k != kEnd; ++k)
+               *kEnd = m_map + (evt.xkey.keycode-m_minCode + 1)*m_symPerCode,
+               *k = kEnd - m_symPerCode;
+             k != kEnd; ++k)
 				{
 					key_code_t c = getCodeFromSym(*k);
 
@@ -267,13 +285,29 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 
         break;
 
+      case MotionNotify:
+        // TODO: Change this when aspect ratio correction comes into play!
+        m_i.input.mx = evt.xmotion.x;
+        m_i.input.my = evt.xmotion.y;
+        break;
+
+      case ButtonPress:
+        // Press button as key
+        m_i.input.k.press(mouseKeys[evt.xbutton.button]);
+        break;
+
+      case ButtonRelease:
+        // Release button as key
+        m_i.input.k.release(mouseKeys[evt.xbutton.button]);
+        break;
+
       case ConfigureNotify:
         // Has the window changed size?
-        if ((width != evt.xconfigure.width) ||
-            (height != evt.xconfigure.height))
+        if ((width != (u32)evt.xconfigure.width) ||
+            (height != (u32)evt.xconfigure.height))
         {
-          width = evt.xconfigure.width;
-          height = evt.xconfigure.height;
+          game.wstate().width = width = evt.xconfigure.width;
+          game.wstate().height = height = evt.xconfigure.height;
 
           m_gl.resize(width, height);
 
@@ -297,7 +331,17 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 			case GAME_UPDATE_FAILED: return WINDOW_LOOP_FAILED;
 			}
 
-			if (!m_gl.render(game.state())) return WINDOW_LOOP_FAILED;
+      // Check window state
+      if ((game.wstate().width != width) || (game.wstate().height != height)) {
+        // Resize window
+        XWindowAttributes attrib;
+        XGetWindowAttributes(x.dis, x.win, &attrib);
+
+        XMoveResizeWindow(x.dis, x.win, attrib.x, attrib.y,
+                          game.wstate().width, game.wstate().height);
+      }
+
+			if (!m_gl.render(game.rstate())) return WINDOW_LOOP_FAILED;
 			glXSwapBuffers(x.dis, x.win);
 
 			if (!m_m.audio->update()) return WINDOW_LOOP_FAILED;

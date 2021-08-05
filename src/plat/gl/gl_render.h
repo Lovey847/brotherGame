@@ -35,7 +35,7 @@ public:
 	~gl_render_t();
 
 	// Returns false if update/resize failed
-	ubool render(const game_state_t &state);
+	ubool render(game_state_render_t &state);
 	ubool resize(u32 width, u32 height);
 };
 
