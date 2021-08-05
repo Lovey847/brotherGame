@@ -4,6 +4,7 @@
 #include "types.h"
 #include "opengl.h"
 #include "gl_vertex.h"
+#include "game/cube.h"
 
 // Dither matrix size
 static constexpr u32 GLBUFFER_DITHER_SIZE = 16;
@@ -49,6 +50,10 @@ public:
     static const u16 quadInds[6] = {0, 1, 2, 3, 1, 2};
     addVerts(4, verts, 6, quadInds);
   }
+
+  // Add game cube to the screen
+  // Culls invisible sides
+  void addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c);
 
   // Render buffer contents
   void flushBuffers();

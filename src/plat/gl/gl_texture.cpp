@@ -14,19 +14,19 @@ gl_texture_t::gl_texture_t() :
 {
   // Initialize texture object
   GLF(GL::GenTextures(1, &m_tex));
-  GLF(GL::BindTexture(GL_TEXTURE_2D, m_tex));
+  GLF(GL::BindTexture(GL::TEXTURE_2D, m_tex));
 
   // Set texture parameters
-  GLF(GL::TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-  GLF(GL::TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-  GLF(GL::TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-  GLF(GL::TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-  GLF(GL::TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0));
+  GLF(GL::TexParameteri(GL::TEXTURE_2D, GL::TEXTURE_WRAP_S, GL::CLAMP_TO_EDGE));
+  GLF(GL::TexParameteri(GL::TEXTURE_2D, GL::TEXTURE_WRAP_T, GL::CLAMP_TO_EDGE));
+  GLF(GL::TexParameteri(GL::TEXTURE_2D, GL::TEXTURE_MIN_FILTER, GL::LINEAR));
+  GLF(GL::TexParameteri(GL::TEXTURE_2D, GL::TEXTURE_MAG_FILTER, GL::LINEAR));
+  GLF(GL::TexParameteri(GL::TEXTURE_2D, GL::TEXTURE_MAX_LEVEL, 0));
 
   // Initialize texture image
-  GLF(GL::TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+  GLF(GL::TexImage2D(GL::TEXTURE_2D, 0, GL::RGBA8,
                      GLTEXTURE_WIDTH, GLTEXTURE_HEIGHT, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, NULL));
+                     GL::RGBA, GL::UNSIGNED_BYTE, NULL));
 }
 
 gl_texture_t::~gl_texture_t() {
@@ -55,10 +55,10 @@ vec2_2 gl_texture_t::imgCoord(atlas_id_t atlas, str_hash_t name) const {
 
 ubool gl_texture_t::load(atlas_id_t id, const atlas_t *atlas) {
   if (atlas) {
-    GLF(GL::TexSubImage2D(GL_TEXTURE_2D, 0,
+    GLF(GL::TexSubImage2D(GL::TEXTURE_2D, 0,
                           gl_texture_atlasOffset[id].i[0], gl_texture_atlasOffset[id].i[1],
                           ATLAS_WIDTH, ATLAS_HEIGHT,
-                          GL_RGBA, GL_UNSIGNED_BYTE, atlas->data));
+                          GL::RGBA, GL::UNSIGNED_BYTE, atlas->data));
   }
 
   m_atlas[id] = atlas;

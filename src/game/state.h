@@ -4,6 +4,7 @@
 #include "types.h"
 #include "atlas.h"
 #include "pak.h"
+#include "game/cube.h"
 
 struct game_state_t;
 
@@ -27,11 +28,6 @@ struct game_state_render_t {
   const atlas_t *atlas[ATLAS_COUNT];
 };
 
-// Cube in world
-struct game_state_cube_t {
-  vec4 min, max;
-};
-
 // Game state struct
 struct game_state_t {
   game_state_win_t w; // Window state
@@ -39,9 +35,8 @@ struct game_state_t {
 
   vec4 pos;
 
-  game_state_cube_t cube;
+  cube_t cube;
 
-  f32 fovx; // Horizontal field of view
   f32 fovy; // Vertical field of view
 
   // Atlas pak entries

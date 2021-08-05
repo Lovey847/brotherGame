@@ -49,7 +49,7 @@ static const char fragmentCode[] =
   "  float cmp = gl_FragCoord.z*2.0;\n"
   "\n"
   "  ivec2 colrow = ivec2(gl_FragCoord.xy)&15;\n"
-  "  if (block.dither[colrow.y*4 + (colrow.x>>2)][colrow.x&3] > cmp)\n"
+  "  if (block.dither[colrow.y*4 + (colrow.x>>2)][colrow.x&3] >= cmp)\n"
   "    discard;\n"
   "\n"
 	"  fragCol = texture(tex, coord);\n"
@@ -112,6 +112,7 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   // Recursively initialize bayer matrix
   f32 dither[GLBUFFER_DITHER_SIZE*GLBUFFER_DITHER_SIZE];
   m_buf.block().dither[0] = 0.f;
+
   for (u32 i = 1; i < GLBUFFER_DITHER_SIZE; i <<= 1) {
     const f32 mul = 1.f/(1<<(2*i));
 
@@ -122,9 +123,7 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
             const uptr ind = dstRow*i*i*2 + row*i*2 + dstCol*i + col;
             dither[ind] = m_buf.block().dither[row*i + col];
 
-            if (dstCol && dstRow) dither[ind] += mul;
-            else if (dstCol) dither[ind] += 2.f*mul;
-            else if (dstRow) dither[ind] += 3.f*mul;
+            dither[ind] += fabsf(3.f*dstRow - 2.f*dstCol)*mul;
           }
         }
       }
@@ -156,36 +155,8 @@ ubool gl_render_t::render(game_state_render_t &state) {
   m_buf.block().modelView[3] = -state.game->pos;
   m_buf.block().modelView[3].f[3] = 1.f;
 
-  // Add block to buffer
-  gl_vertex_t v[4];
-
-  v[0].pos = state.game->cube.min;
-  v[0].coord = m_texture.imgCoord(ATLAS_GLOBAL, str_hash("xor"));
-
-  v[1].pos = vec4(state.game->cube.max.f[0], state.game->cube.min.f[1], state.game->cube.min.f[2], 1.f);
-  v[1].coord = v[0].coord + (v[0].coord.shuffle<0x2123>()&vec4(vec4_int_init(0xffffffffu, 0, 0, 0)));
-
-  v[2].pos = vec4(state.game->cube.min.f[0], state.game->cube.max.f[1], state.game->cube.min.f[2], 1.f);
-  v[2].coord = v[0].coord + (v[0].coord.shuffle<0x0323>()&vec4(vec4_int_init(0, 0xffffffffu, 0, 0)));
-
-  v[3].pos = vec4(state.game->cube.max.f[0], state.game->cube.max.f[1], state.game->cube.min.f[2], 1.f);
-  v[3].coord = v[0].coord + v[0].coord.shuffle<0x2323>();
-
-  m_buf.addQuad(v);
-
-  v[0].pos = state.game->cube.min;
-  v[1].pos = vec4(state.game->cube.min.f[0], state.game->cube.min.f[1], state.game->cube.max.f[2], 1.f);
-  v[2].pos = vec4(state.game->cube.min.f[0], state.game->cube.max.f[1], state.game->cube.min.f[2], 1.f);
-  v[3].pos = vec4(state.game->cube.min.f[0], state.game->cube.max.f[1], state.game->cube.max.f[2], 1.f);
-
-  m_buf.addQuad(v);
-
-  v[0].pos = vec4(state.game->cube.max.f[0], state.game->cube.min.f[1], state.game->cube.min.f[2], 1.f);;
-  v[1].pos = vec4(state.game->cube.max.f[0], state.game->cube.min.f[1], state.game->cube.max.f[2], 1.f);
-  v[2].pos = vec4(state.game->cube.max.f[0], state.game->cube.max.f[1], state.game->cube.min.f[2], 1.f);
-  v[3].pos = vec4(state.game->cube.max.f[0], state.game->cube.max.f[1], state.game->cube.max.f[2], 1.f);
-
-  m_buf.addQuad(v);
+  // Add game cubes
+  m_buf.addCube(m_texture, state.game->pos, state.game->cube);
 
   GLF(GL::Clear(GL::COLOR_BUFFER_BIT|GL::DEPTH_BUFFER_BIT));
 
