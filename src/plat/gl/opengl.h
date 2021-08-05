@@ -104,7 +104,8 @@ namespace GL {
 
 		////////////////////////
 		// OpenGL Capabilities
-		BLEND = 0x0be2,
+		BLEND      = 0x0be2,
+    DEPTH_TEST = 0x0b71,
 
 		////////////////////////////
 		// Blend function factors
@@ -529,6 +530,7 @@ namespace GL {
 	VOIDLIB2(BlendFunc,         GLenum, GLenum)
 	VOIDLIB2(GetIntegerv,       GLenum, GLint*)
   VOIDLIB5(GetTexImage,       GLenum, GLint, GLenum, GLenum, void*)
+  VOIDLIB1(DepthFunc,         GLenum)
 
 	DEFNLIB0(GLenum,         GetError)
 	DEFNLIB1(const GLubyte*, GetString, GLenum)

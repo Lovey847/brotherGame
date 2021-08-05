@@ -18,13 +18,15 @@ static const char vertexCode[] =
   "layout(std140) uniform block_t {\n"
   "  mat4 modelView;\n"
   "  mat4 projection;\n"
+  "\n"
+  "  vec4 dither[16*4];\n"
   "} block;\n"
 	"\n"
 	"out vec2 coord;\n"
 	"\n"
 	"void main() {\n"
-	"    gl_Position = block.projection*block.modelView * inPos;\n"
-	"    coord = inCoord;\n"
+	"  gl_Position = block.projection*block.modelView * inPos;\n"
+	"  coord = inCoord;\n"
 	"}\n";
 
 static const char fragmentCode[] =
@@ -32,19 +34,26 @@ static const char fragmentCode[] =
 	"\n"
 	"in vec2 coord;\n"
   "\n"
+  "layout(std140) uniform block_t {\n"
+  "  mat4 modelView;\n"
+  "  mat4 projection;\n"
+  "\n"
+  "  vec4 dither[16*4];\n"
+  "} block;\n"
+	"\n"
   "uniform sampler2D tex;\n"
 	"\n"
 	"out vec4 fragCol;\n"
 	"\n"
 	"void main() {\n"
-	"    fragCol = texture(tex, coord);\n"
+  "  float cmp = gl_FragCoord.z*2.0;\n"
+  "\n"
+  "  ivec2 colrow = ivec2(gl_FragCoord.xy)&15;\n"
+  "  if (block.dither[colrow.y*4 + (colrow.x>>2)][colrow.x&3] > cmp)\n"
+  "    discard;\n"
+  "\n"
+	"  fragCol = texture(tex, coord);\n"
 	"}\n";
-
-static const gl_vertex_t verts[] = {
-  {vec4(-0.5f, 0.f, 0.f, 1.f), vec2_2(0.f, 128.f/(float)GLTEXTURE_HEIGHT, 0.f, 0.f)},
-  {vec4(0.5f, 0.5f, 0.f, 1.f), vec2_2(256.f/(float)GLTEXTURE_WIDTH, 0.f, 0.f, 0.f)},
-  {vec4(0.5f, -0.5f, 0.f, 1.f), vec2_2(256.f/(float)GLTEXTURE_WIDTH, 256.f/(float)GLTEXTURE_HEIGHT, 0.f, 0.f)}
-};
 
 static const vec4 identMat[4] = {
   vec4(1.f, 0.f, 0.f, 0.f),
@@ -99,6 +108,34 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   m_buf.block().projection[1].f[1] = projDist;
   m_buf.block().projection[2] = vec4(0.f, 0.f, (farClip+nearClip*2.f)/farClip, 1.f);
   m_buf.block().projection[3] = vec4(0.f, 0.f, nearClip*-2.f, 0.f);
+
+  // Recursively initialize bayer matrix
+  f32 dither[GLBUFFER_DITHER_SIZE*GLBUFFER_DITHER_SIZE];
+  m_buf.block().dither[0] = 0.f;
+  for (u32 i = 1; i < GLBUFFER_DITHER_SIZE; i <<= 1) {
+    const f32 mul = 1.f/(1<<(2*i));
+
+    for (u32 dstRow = 0; dstRow < 2; ++dstRow) {
+      for (u32 dstCol = 0; dstCol < 2; ++dstCol) {
+        for (u32 row = 0; row < i; ++row) {
+          for (u32 col = 0; col < i; ++col) {
+            const uptr ind = dstRow*i*i*2 + row*i*2 + dstCol*i + col;
+            dither[ind] = m_buf.block().dither[row*i + col];
+
+            if (dstCol && dstRow) dither[ind] += mul;
+            else if (dstCol) dither[ind] += 2.f*mul;
+            else if (dstRow) dither[ind] += 3.f*mul;
+          }
+        }
+      }
+    }
+
+    memcpy(m_buf.block().dither, dither, sizeof(dither));
+  }
+
+  // Enable depth buffer
+  GLF(GL::Enable(GL::DEPTH_TEST));
+  GLF(GL::DepthFunc(GL::LESS));
 }
 
 gl_render_t::~gl_render_t() {
@@ -150,7 +187,7 @@ ubool gl_render_t::render(game_state_render_t &state) {
 
   m_buf.addQuad(v);
 
-  GLF(GL::Clear(GL_COLOR_BUFFER_BIT));
+  GLF(GL::Clear(GL::COLOR_BUFFER_BIT|GL::DEPTH_BUFFER_BIT));
 
   m_buf.flushBuffers();
 

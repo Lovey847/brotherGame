@@ -5,10 +5,17 @@
 #include "opengl.h"
 #include "gl_vertex.h"
 
+// Dither matrix size
+static constexpr u32 GLBUFFER_DITHER_SIZE = 16;
+
 struct gl_buffer_block_t {
   // NOTE: All matrices are column-major
   vec4 modelView[4];
   vec4 projection[4];
+
+  // Dither matrix, used to dither out objects when they get close
+  // to the near clipping plane
+  f32 dither[GLBUFFER_DITHER_SIZE * GLBUFFER_DITHER_SIZE];
 };
 
 class gl_buffers_t {
@@ -24,7 +31,7 @@ private:
 
   GLuint m_vao, m_vbo, m_ebo, m_ubo;
 
-  gl_buffer_block_t m_block;
+  gl_buffer_block_t *m_block;
 
 public:
   gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount);
@@ -46,8 +53,8 @@ public:
   // Render buffer contents
   void flushBuffers();
 
-  FINLINE const gl_buffer_block_t &block() const {return m_block;}
-  FINLINE gl_buffer_block_t &block() {return m_block;}
+  FINLINE const gl_buffer_block_t &block() const {return *m_block;}
+  FINLINE gl_buffer_block_t &block() {return *m_block;}
 };
 
 #endif //GL_BUFFER_H
