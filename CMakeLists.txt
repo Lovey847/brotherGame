@@ -116,6 +116,7 @@ target_sources(app PRIVATE
 	  "${CMAKE_SOURCE_DIR}/src/rng.cpp"
     "${CMAKE_SOURCE_DIR}/src/game/pak.cpp"
     "${CMAKE_SOURCE_DIR}/src/game/atlas.cpp"
+    "${CMAKE_SOURCE_DIR}/src/vector.cpp"
 
 	  # Interfaces
 	  "${CMAKE_SOURCE_DIR}/src/plat/mem.cpp"

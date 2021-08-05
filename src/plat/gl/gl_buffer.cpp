@@ -20,6 +20,10 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   GLF(GL::GenBuffers(1, &m_ebo));
   GLF(GL::BindBuffer(GL::ELEMENT_ARRAY_BUFFER, m_ebo));
 
+  // Create UBO
+  GLF(GL::GenBuffers(1, &m_ubo));
+  GLF(GL::BindBuffer(GL::UNIFORM_BUFFER, m_ubo));
+
   // Setup VAO attributes
   GLF(GL::VertexAttribPointer(0,
                               4, GL::FLOAT, GL::FALSE,
@@ -30,6 +34,9 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   GLF(GL::EnableVertexAttribArray(0));
   GLF(GL::EnableVertexAttribArray(1));
 
+  // Bind uniform buffer range
+  GLF(GL::BindBufferRange(GL::UNIFORM_BUFFER, 0, m_ubo, 0, sizeof(gl_buffer_block_t)));
+
   // Allocate local buffers
   // Allocate vertices and indices in one buffer
   const u8 *vert_inds = (u8*)m_m.alloc(m_vertSize+m_indSize);
@@ -37,11 +44,13 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   m_inds = (u16*)(vert_inds+m_vertSize);
 
   m_curVert = m_curInd = 0;
+
 }
 
 gl_buffers_t::~gl_buffers_t() {
   m_m.free(m_verts);
 
+  GLF(GL::DeleteBuffers(1, &m_ubo));
   GLF(GL::DeleteBuffers(1, &m_ebo));
   GLF(GL::DeleteBuffers(1, &m_vbo));
   GLF(GL::DeleteVertexArrays(1, &m_vao));
@@ -73,10 +82,12 @@ void gl_buffers_t::addVerts(uptr vertCount, const gl_vertex_t *verts,
 
 void gl_buffers_t::flushBuffers() {
   // Orphan buffers
-  GLF(GL::BufferData(GL_ARRAY_BUFFER, m_vertSize, NULL, GL_STREAM_DRAW));
-  GLF(GL::BufferSubData(GL_ARRAY_BUFFER, 0, m_curVert*sizeof(gl_vertex_t), m_verts));
-  GLF(GL::BufferData(GL_ELEMENT_ARRAY_BUFFER, m_indSize, NULL, GL_STREAM_DRAW));
-  GLF(GL::BufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_curInd*sizeof(u16), m_inds));
+  GLF(GL::BufferData(GL::ARRAY_BUFFER, m_vertSize, NULL, GL_STREAM_DRAW));
+  GLF(GL::BufferSubData(GL::ARRAY_BUFFER, 0, m_curVert*sizeof(gl_vertex_t), m_verts));
+  GLF(GL::BufferData(GL::ELEMENT_ARRAY_BUFFER, m_indSize, NULL, GL_STREAM_DRAW));
+  GLF(GL::BufferSubData(GL::ELEMENT_ARRAY_BUFFER, 0, m_curInd*sizeof(u16), m_inds));
+  GLF(GL::BufferData(GL::UNIFORM_BUFFER, sizeof(gl_buffer_block_t), NULL, GL_STREAM_DRAW));
+  GLF(GL::BufferSubData(GL::UNIFORM_BUFFER, 0, sizeof(gl_buffer_block_t), &m_block));
 
   // Render vertices
   GLF(GL::DrawElements(GL_TRIANGLES, m_curInd, GL_UNSIGNED_SHORT, (void*)0));

@@ -6,10 +6,9 @@
 #include "gl_vertex.h"
 
 struct gl_buffer_block_t {
-  // NOTE: All matrices are column-major,
-  // so access them like "projection[column][row]"
-  f32 modelView[4][4];
-  f32 projection[4][4];
+  // NOTE: All matrices are column-major
+  vec4 modelView[4];
+  vec4 projection[4];
 };
 
 class gl_buffers_t {
@@ -24,6 +23,8 @@ private:
   uptr m_curVert, m_curInd;
 
   GLuint m_vao, m_vbo, m_ebo, m_ubo;
+
+  gl_buffer_block_t m_block;
 
 public:
   gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount);
@@ -44,6 +45,9 @@ public:
 
   // Render buffer contents
   void flushBuffers();
+
+  FINLINE const gl_buffer_block_t &block() const {return m_block;}
+  FINLINE gl_buffer_block_t &block() {return m_block;}
 };
 
 #endif //GL_BUFFER_H

@@ -3,6 +3,9 @@
 #include "linux_gl_window.h"
 #include "linux_key.h"
 
+static constexpr u32 DEF_WIDTH = 1072;
+static constexpr u32 DEF_HEIGHT = 603;
+
 linux_gl_window_t::x_t::x_t() {
 	// Open display
 	dis = XOpenDisplay(NULL);
@@ -75,14 +78,14 @@ linux_gl_window_t::x_t::x_t() {
     StructureNotifyMask;
 
 	win = XCreateWindow(dis, root, // Display and parent window
-						0, 0, // Position of window, usually ignored
-						800, 600, // Size of window, 800x600 by default
-						0, vis->depth, // Border size and depth of window
-						InputOutput, // Window class
-						vis->visual, // Visual
-						CWColormap | CWBorderPixel | // Attributes mask
-						CWEventMask,
-						&attribs); // Attributes
+                      0, 0, // Position of window, usually ignored
+                      DEF_WIDTH, DEF_HEIGHT, // Size of window
+                      0, vis->depth, // Border size and depth of window
+                      InputOutput, // Window class
+                      vis->visual, // Visual
+                      CWColormap | CWBorderPixel | // Attributes mask
+                      CWEventMask,
+                      &attribs); // Attributes
 
 	XFree(vis);
 	if (!win) {
@@ -152,7 +155,7 @@ linux_gl_window_t::x_t::~x_t() {
 }
 
 linux_gl_window_t::linux_gl_window_t(window_init_t &init) :
-	m_m(init.m), m_i(init.i), m_gl(m_i.mem, 800, 600)
+	m_m(init.m), m_i(init.i), m_gl(m_i.mem, init.g.state(), DEF_WIDTH, DEF_HEIGHT)
 {
 	// Enable detectable autorepeat
 	Bool supported;

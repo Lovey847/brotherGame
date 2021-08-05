@@ -31,7 +31,7 @@ private:
   gl_buffers_t m_buf;
 
 public:
-	gl_render_t(mem_t &m, u32 width, u32 height);
+	gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height);
 	~gl_render_t();
 
 	// Returns false if update/resize failed
