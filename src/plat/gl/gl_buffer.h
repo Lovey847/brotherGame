@@ -25,6 +25,7 @@ private:
   uptr m_vertCount, m_indCount;
   uptr m_vertSize, m_indSize;
   uptr m_curVert, m_curInd;
+  uptr m_baseVert, m_baseInd;
 
   GLuint m_vao, m_vbo, m_ebo, m_ubo;
 
@@ -47,7 +48,25 @@ public:
     addVerts(4, verts, 6, quadInds);
   }
 
-  // Add game cube to the screen
+  // Add persistent vertices to buffer
+  void addBaseVerts(uptr vertCount, const gl_vertex_t *verts, uptr indCount, const u16 *inds);
+
+  FINLINE void addBaseTriangle(const gl_vertex_t verts[3]) {
+    static const u16 triangleInds[3] = {0, 1, 2};
+    addBaseVerts(3, verts, 3, triangleInds);
+  }
+
+  FINLINE void addBaseQuad(const gl_vertex_t verts[4]) {
+    static const u16 quadInds[6] = {0, 1, 2, 3, 1, 2};
+    addBaseVerts(4, verts, 6, quadInds);
+  }
+
+  // Clear persistent vertices
+  FINLINE void clearBaseVerts() {
+    m_baseVert = m_baseInd = 0;
+  }
+
+  // Add persistent game cube to screen
   // Culls invisible sides
   void addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c);
 

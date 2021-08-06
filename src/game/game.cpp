@@ -37,6 +37,8 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
     m_atlasEnt[i] = PAK_INVALID_ENTRY;
 
   // Load global atlas into renderer
+  m_state->r.load = true;
+
   m_atlasEnt[ATLAS_GLOBAL] = m_pak.getEntry(str_hash("atlases/global.atl"));
   if (m_atlasEnt[ATLAS_GLOBAL] == PAK_INVALID_ENTRY)
     throw log_except("Cannot find atlases/global.atl!");
@@ -60,10 +62,14 @@ game_t::~game_t() {
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
-  if (m_i.input.k.down[KEYC_LEFT]) m_state->yaw += (f32)M_PI/120.f;
-  if (m_i.input.k.down[KEYC_RIGHT]) m_state->yaw -= (f32)M_PI/120.f;
-  if (m_i.input.k.down[KEYC_UP]) m_state->pitch += (f32)M_PI/120.f;
-  if (m_i.input.k.down[KEYC_DOWN]) m_state->pitch -= (f32)M_PI/120.f;
+  m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
+  m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
+
+  while (m_state->yaw < 0.f) m_state->yaw += (f32)M_PI*2.f;
+  while (m_state->yaw > (f32)M_PI*2.f) m_state->yaw -= (f32)M_PI*2.f;
+
+  if (m_state->pitch < -(f32)M_PI/2.f) m_state->pitch = -(f32)M_PI/2.f;
+  else if (m_state->pitch > (f32)M_PI/2.f) m_state->pitch = (f32)M_PI/2.f;
 
   const f32 c = cosf(m_state->yaw);
   const f32 s = sinf(m_state->yaw);
@@ -76,9 +82,6 @@ game_update_ret_t game_t::update() {
   if (m_i.input.k.down[KEYC_D]) m_state->pos += forward.shuffle<0x2103>()*vec4(4.f, 4.f, -4.f, 4.f);;
   if (m_i.input.k.down[KEYC_SPACE]) m_state->pos.f[1] += 4.f;
   if (m_i.input.k.down[KEYC_LCTRL]) m_state->pos.f[1] -= 4.f;
-
-  m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
-  m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
 
 	return GAME_UPDATE_CONTINUE;
 }

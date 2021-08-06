@@ -80,7 +80,12 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
 	m_program.use();
 
   // Setup projection matrix
-  // Model view matrix is setup when rendering
+  //
+  // projection =
+  // m_projDist*invAspect 0          0                            0
+  // 0                    m_projDist 0                            0
+  // 0                    0          (farClip+nearClip*2)/farClip nearClip*-2
+  // 0                    0          1                            0
   memcpy((void*)m_buf.block().projection, &identMat, sizeof(identMat));
 
   const f32 invAspect = (f32)height/(f32)width;
@@ -108,12 +113,17 @@ gl_render_t::~gl_render_t() {
 }
 
 ubool gl_render_t::render(game_state_render_t &state) {
-  // Check if we should load any atlases
-  for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
-    if (state.atlas[i]) {
-      m_texture.load(i, state.atlas[i]);
-      state.atlas[i] = NULL;
+  // Check if we should load anything
+  if (state.load) {
+    for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i) {
+      if (state.atlas[i])
+        m_texture.load(i, state.atlas[i]);
     }
+
+    // Load cube
+    m_buf.addCube(m_texture, state.game->pos, state.game->cube);
+
+    state.load = false;
   }
 
   // Setup model view matrix
@@ -156,9 +166,6 @@ ubool gl_render_t::render(game_state_render_t &state) {
     vec4(c, ps, pc, 1.f)*vec4(-x, s, s, 1.f)*vec4(1.f, -x, x, 1.f) +
     vec4(s, pc, ps, 0.f)*vec4(-z, -y, -y, 0.f) +
     vec4(0.f, ps, pc, 0.f)*vec4(0.f, c, c, 0.f)*vec4(0.f, z, -z, 0.f);
-
-  // Add game cubes
-  m_buf.addCube(m_texture, state.game->pos, state.game->cube);
 
   GLF(GL::Clear(GL::COLOR_BUFFER_BIT|GL::DEPTH_BUFFER_BIT));
 

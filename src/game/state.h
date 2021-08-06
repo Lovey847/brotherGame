@@ -19,8 +19,11 @@ struct game_state_win_t {
 struct game_state_render_t {
   const game_state_t *game;
 
+  // Set to true when renderer
+  // should load level assets
+  ubool load;
+
   // Used to load atlases into renderer
-  // Set to NULL when atlas is loaded
   const atlas_t *atlas[ATLAS_COUNT];
 };
 

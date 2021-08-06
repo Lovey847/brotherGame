@@ -45,7 +45,7 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   m_verts = (gl_vertex_t*)(memory+sizeof(gl_buffer_block_t));
   m_inds = (u16*)(memory+sizeof(gl_buffer_block_t)+m_vertSize);
 
-  m_curVert = m_curInd = 0;
+  m_curVert = m_curInd = m_baseVert = m_baseInd = 0;
 }
 
 gl_buffers_t::~gl_buffers_t() {
@@ -81,6 +81,19 @@ void gl_buffers_t::addVerts(uptr vertCount, const gl_vertex_t *verts,
   m_curVert += vertCount;
 }
 
+void gl_buffers_t::addBaseVerts(uptr vertCount, const gl_vertex_t *verts,
+                                uptr indCount, const u16 *inds)
+{
+  // Overwrite anything past m_baseVert
+  m_curVert = m_baseVert;
+  m_curInd = m_baseInd;
+
+  addVerts(vertCount, verts, indCount, inds);
+
+  m_baseVert = m_curVert;
+  m_baseInd = m_curInd;
+}
+
 void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
   gl_vertex_t verts[4]; // Quad vertices, drawn 4 times
 
@@ -104,7 +117,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
                     (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
     verts[3].pos = c.min;
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 
   // Right side
@@ -117,7 +130,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
     verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
                     (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 
   // Bottom side
@@ -130,7 +143,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
     verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
                     (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 
   // Top side
@@ -143,7 +156,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
     verts[3].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
                     (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 
   // Front side
@@ -156,7 +169,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
     verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
                     (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 
   // Back side
@@ -169,7 +182,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
     verts[3].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
                     (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
 
-    addQuad(verts);
+    addBaseQuad(verts);
   }
 }
 
@@ -186,5 +199,6 @@ void gl_buffers_t::flushBuffers() {
   GLF(GL::DrawElements(GL::TRIANGLES, m_curInd, GL::UNSIGNED_SHORT, (void*)0));
 
   // Reset buffers
-  m_curVert = m_curInd = 0;
+  m_curVert = m_baseVert;
+  m_curInd = m_baseInd;
 }
