@@ -77,5 +77,8 @@ game_update_ret_t game_t::update() {
   if (m_i.input.k.down[KEYC_SPACE]) m_state->pos.f[1] += 4.f;
   if (m_i.input.k.down[KEYC_LCTRL]) m_state->pos.f[1] -= 4.f;
 
+  m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
+  m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
+
 	return GAME_UPDATE_CONTINUE;
 }

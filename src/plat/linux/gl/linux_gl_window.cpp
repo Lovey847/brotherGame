@@ -169,6 +169,11 @@ linux_gl_window_t::linux_gl_window_t(window_init_t &init) :
 
 	// Show window
 	XMapWindow(x.dis, x.win);
+
+  // Put mouse in center of window
+  XWarpPointer(x.dis, None, x.win, 0, 0, 0, 0, x.width>>1, x.height>>1);
+  m_i.input.mx = x.width>>1;
+  m_i.input.my = x.height>>1;
 }
 
 linux_gl_window_t::~linux_gl_window_t() {
@@ -327,6 +332,9 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 			case GAME_UPDATE_CLOSE: return WINDOW_LOOP_SUCCESS;
 			case GAME_UPDATE_FAILED: return WINDOW_LOOP_FAILED;
 			}
+
+      // Reset mouse pointer back to center of screen
+      XWarpPointer(x.dis, None, x.win, 0, 0, 0, 0, x.width>>1, x.height>>1);
 
 			if (!m_gl.render(game.rstate())) return WINDOW_LOOP_FAILED;
 			glXSwapBuffers(x.dis, x.win);

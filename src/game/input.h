@@ -12,8 +12,9 @@ struct game_input_t {
 	// Mouse input
 	i32 mx, my;
 
-  // Screen size
-  i32 width, height;
+  FINLINE game_input_t() {
+    mx = my = -1;
+  }
 };
 
 #endif //GAME_INPUT_H
