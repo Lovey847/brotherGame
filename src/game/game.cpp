@@ -17,7 +17,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set position
-	m_state->pos = vec4(-256.f, -256.f, 0.f, 1.f);
+	m_state->pos = vec4(0.f, 0.f, -256.f, 1.f);
 
   // Set cube properties
   m_state->cube.min = vec4(-128.f, -384.f, -128.f, 1.f);
@@ -28,6 +28,9 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   // NOTE: No error checking is done here!
   const f32 fov = str_strnum<f32>(m_a.valDef(str_hash("-fov"), "120"))*((f32)M_PI/180.f);
   m_state->fovy = fov * (9.f/16.f);
+
+  // Set player direction (looking in positive z direction)
+  m_state->yaw = (f32)M_PI*0.5f;
 
   // Initialize atlasEnt
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i)
@@ -57,10 +60,10 @@ game_t::~game_t() {
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
-  if (m_i.input.k.down[KEYC_LEFT]) m_state->yaw += (f32)M_PI/60.f;
-  if (m_i.input.k.down[KEYC_RIGHT]) m_state->yaw -= (f32)M_PI/60.f;
-  if (m_i.input.k.down[KEYC_UP]) m_state->pitch += (f32)M_PI/60.f;
-  if (m_i.input.k.down[KEYC_DOWN]) m_state->pitch -= (f32)M_PI/60.f;
+  if (m_i.input.k.down[KEYC_LEFT]) m_state->yaw += (f32)M_PI/120.f;
+  if (m_i.input.k.down[KEYC_RIGHT]) m_state->yaw -= (f32)M_PI/120.f;
+  if (m_i.input.k.down[KEYC_UP]) m_state->pitch += (f32)M_PI/120.f;
+  if (m_i.input.k.down[KEYC_DOWN]) m_state->pitch -= (f32)M_PI/120.f;
 
   const f32 c = cosf(m_state->yaw);
   const f32 s = sinf(m_state->yaw);

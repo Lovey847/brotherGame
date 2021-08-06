@@ -13,10 +13,6 @@ struct gl_buffer_block_t {
   // NOTE: All matrices are column-major
   vec4 modelView[4];
   vec4 projection[4];
-
-  // Dither matrix, used to dither out objects when they get close
-  // to the near clipping plane
-  f32 dither[GLBUFFER_DITHER_SIZE * GLBUFFER_DITHER_SIZE];
 };
 
 class gl_buffers_t {

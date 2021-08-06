@@ -18,8 +18,6 @@ static const char vertexCode[] =
   "layout(std140) uniform block_t {\n"
   "  mat4 modelView;\n"
   "  mat4 projection;\n"
-  "\n"
-  "  vec4 dither[16*4];\n"
   "} block;\n"
 	"\n"
 	"out vec2 coord;\n"
@@ -37,8 +35,6 @@ static const char fragmentCode[] =
   "layout(std140) uniform block_t {\n"
   "  mat4 modelView;\n"
   "  mat4 projection;\n"
-  "\n"
-  "  vec4 dither[16*4];\n"
   "} block;\n"
 	"\n"
   "uniform sampler2D tex;\n"
@@ -46,12 +42,6 @@ static const char fragmentCode[] =
 	"out vec4 fragCol;\n"
 	"\n"
 	"void main() {\n"
-  "  float cmp = gl_FragCoord.z*2.0;\n"
-  "\n"
-  "  ivec2 colrow = ivec2(gl_FragCoord.xy)&15;\n"
-  "  if (block.dither[colrow.y*4 + (colrow.x>>2)][colrow.x&3] >= cmp)\n"
-  "    discard;\n"
-  "\n"
 	"  fragCol = texture(tex, coord);\n"
 	"}\n";
 
@@ -99,7 +89,7 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   m_projDist = 1.f/tanf(s.fovy*0.5f);
 
   // Near clipping plane distance
-  static const f32 nearClip = 32.f;
+  static const f32 nearClip = 16.f;
 
   // Far clipping plane distance
   static const f32 farClip = 2048.f;
@@ -108,29 +98,6 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   m_buf.block().projection[1].f[1] = m_projDist;
   m_buf.block().projection[2] = vec4(0.f, 0.f, (farClip+nearClip*2.f)/farClip, 1.f);
   m_buf.block().projection[3] = vec4(0.f, 0.f, nearClip*-2.f, 0.f);
-
-  // Recursively initialize bayer matrix
-  f32 dither[GLBUFFER_DITHER_SIZE*GLBUFFER_DITHER_SIZE];
-  m_buf.block().dither[0] = 0.f;
-
-  for (u32 i = 1; i < GLBUFFER_DITHER_SIZE; i <<= 1) {
-    const f32 mul = 1.f/(1<<(2*i));
-
-    for (u32 dstRow = 0; dstRow < 2; ++dstRow) {
-      for (u32 dstCol = 0; dstCol < 2; ++dstCol) {
-        for (u32 row = 0; row < i; ++row) {
-          for (u32 col = 0; col < i; ++col) {
-            const uptr ind = dstRow*i*i*2 + row*i*2 + dstCol*i + col;
-            dither[ind] = m_buf.block().dither[row*i + col];
-
-            dither[ind] += fabsf(3.f*dstRow - 2.f*dstCol)*mul;
-          }
-        }
-      }
-    }
-
-    memcpy(m_buf.block().dither, dither, sizeof(dither));
-  }
 
   // Enable depth buffer
   GLF(GL::Enable(GL::DEPTH_TEST));
@@ -156,10 +123,39 @@ ubool gl_render_t::render(game_state_render_t &state) {
   const f32 c = cosf(state.game->yaw-(f32)M_PI*0.5f);
   const f32 s = sinf(state.game->yaw-(f32)M_PI*0.5f);
 
-  m_buf.block().modelView[0] = vec4(c, 0.f, -s, 0.f);
-  m_buf.block().modelView[2] = vec4(s, 0.f, c, 0.f);
-  m_buf.block().modelView[3] = (-state.game->pos*vec4(c, 1.f, c, -1.f) +
-                                -state.game->pos.shuffle<0x2103>()*vec4(s, 0.f, -s, 0.f));
+  const f32 pc = cosf(state.game->pitch);
+  const f32 ps = sinf(state.game->pitch);
+
+  const f32 x = state.game->pos.f[0];
+  const f32 y = state.game->pos.f[1];
+  const f32 z = state.game->pos.f[2];
+
+  // Setup model view matrix, contains
+  // transformation matrix, yaw rotation matrix and
+  // pitch rotation matrix, performed on the vertex
+  // in that order
+  //
+  // NOTE: This can be optimized by storing c, s,
+  // pc and ps in a vector, and x, y, z in another vector,
+  // and shuffling them around instead of referring to them
+  // as singular values. I don't know anyone insane enough
+  // to do that though.
+  //
+  // modelView =
+  // c     0   s    c*-x+s*-z
+  // ps*s  pc -ps*c ps*s*-x+pc*-y+ps*c*z
+  // pc*-s ps  pc*c pc*s*x+ps*-y+pc*c*-z
+  // 0     0   0    1
+  m_buf.block().modelView[0] =
+    vec4(c, ps, pc, 0.f)*vec4(1.f, s, -s, 1.f);
+  m_buf.block().modelView[1] =
+    vec4(0.f, pc, ps, 0.f);
+  m_buf.block().modelView[2] =
+    vec4(s, -ps, pc, 0.f)*vec4(1.f, c, c, 1.f);
+  m_buf.block().modelView[3] =
+    vec4(c, ps, pc, 1.f)*vec4(-x, s, s, 1.f)*vec4(1.f, -x, x, 1.f) +
+    vec4(s, pc, ps, 0.f)*vec4(-z, -y, -y, 0.f) +
+    vec4(0.f, ps, pc, 0.f)*vec4(0.f, c, c, 0.f)*vec4(0.f, z, -z, 0.f);
 
   // Add game cubes
   m_buf.addCube(m_texture, state.game->pos, state.game->cube);

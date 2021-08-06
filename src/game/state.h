@@ -11,12 +11,8 @@ struct game_state_t;
 // Window state information
 struct game_state_win_t {
   // Window size
-  // Usually read by the game, if set by the game
-  // then the window module should resize the window
-  // accordingly, or set the size back if it is unable
-  // to resize the window
+  // Read by the game to determine window size
   u32 width, height;
-  ubool fullscreen;
 };
 
 // Renderer specific state data

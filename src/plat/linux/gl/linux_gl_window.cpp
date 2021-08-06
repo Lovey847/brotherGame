@@ -227,12 +227,11 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 	XEvent evt;
 	rate_t framerate(m_i.timer, 60);
 	unsigned int lastPressed = 0; // Last keycode pressed, detects autorepeat
-  u32 width, height;
 
   XWindowAttributes attribs;
   XGetWindowAttributes(x.dis, x.win, &attribs);
-  game.wstate().width = width = attribs.width;
-  game.wstate().height = height = attribs.height;
+  game.wstate().width = attribs.width;
+  game.wstate().height = attribs.height;
 
   // For ButtonPress and ButtonRelease events
   static const key_code_t mouseKeys[] = {
@@ -306,13 +305,13 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 
       case ConfigureNotify:
         // Has the window changed size?
-        if ((width != (u32)evt.xconfigure.width) ||
-            (height != (u32)evt.xconfigure.height))
+        if ((game.wstate().width != (u32)evt.xconfigure.width) ||
+            (game.wstate().height != (u32)evt.xconfigure.height))
         {
-          game.wstate().width = width = evt.xconfigure.width;
-          game.wstate().height = height = evt.xconfigure.height;
+          game.wstate().width = evt.xconfigure.width;
+          game.wstate().height = evt.xconfigure.height;
 
-          m_gl.resize(width, height);
+          m_gl.resize(game.wstate().width, game.wstate().height);
 
           log_note("Resized");
         }
@@ -333,16 +332,6 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 			case GAME_UPDATE_CLOSE: return WINDOW_LOOP_SUCCESS;
 			case GAME_UPDATE_FAILED: return WINDOW_LOOP_FAILED;
 			}
-
-      // Check window state
-      if ((game.wstate().width != width) || (game.wstate().height != height)) {
-        // Resize window
-        XWindowAttributes attrib;
-        XGetWindowAttributes(x.dis, x.win, &attrib);
-
-        XMoveResizeWindow(x.dis, x.win, attrib.x, attrib.y,
-                          game.wstate().width, game.wstate().height);
-      }
 
 			if (!m_gl.render(game.rstate())) return WINDOW_LOOP_FAILED;
 			glXSwapBuffers(x.dis, x.win);
