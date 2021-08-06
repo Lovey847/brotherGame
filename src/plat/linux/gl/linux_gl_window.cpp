@@ -174,9 +174,15 @@ linux_gl_window_t::linux_gl_window_t(window_init_t &init) :
   XWarpPointer(x.dis, None, x.win, 0, 0, 0, 0, x.width>>1, x.height>>1);
   m_i.input.mx = x.width>>1;
   m_i.input.my = x.height>>1;
+
+  // Hide mouse cursor
+  XFixesHideCursor(x.dis, x.win);
 }
 
 linux_gl_window_t::~linux_gl_window_t() {
+  // Show cursor
+  XFixesShowCursor(x.dis, x.win);
+
 	// Hide window
 	XUnmapWindow(x.dis, x.win);
 

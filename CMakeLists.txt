@@ -129,7 +129,7 @@ target_sources(app PRIVATE
 if (PLAT_OS_LINUX)
 	  target_include_directories(app PRIVATE "${CMAKE_SOURCE_DIR}/src/plat/linux")
 	  find_package(X11 REQUIRED)
-	  if (NOT X11_FOUND OR NOT X11_XShm_FOUND)
+	  if (NOT X11_FOUND OR NOT X11_Xfixes_FOUND)
 		    message(FATAL_ERROR "Cannot find Xlib!")
 	  endif ()
 	  
@@ -199,11 +199,11 @@ if (PLAT_OS_LINUX)
 	      )
 	  target_include_directories(app PRIVATE
 		    ${X11_X11_INCLUDE_PATH}
-		    ${X11_XShm_INCLUDE_PATH}
+		    ${X11_Xfixes_INCLUDE_PATH}
 	      )
 	  target_link_libraries(app
 		    X11::X11
-		    X11::Xext # Contains XShm
+		    X11::Xfixes
 	      )
 else ()
 	  message(FATAL_ERROR "Unknown platform!")

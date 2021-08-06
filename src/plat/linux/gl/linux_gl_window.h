@@ -15,14 +15,8 @@
 #include <X11/Xatom.h>
 #include <X11/XKBlib.h>
 
-// XShm
-#if 0 // I don't think I use XShm
-
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
-
-#endif
+// Xlib extensions
+#include <X11/extensions/Xfixes.h>
 
 // OpenGL
 #include <GL/glx.h>
