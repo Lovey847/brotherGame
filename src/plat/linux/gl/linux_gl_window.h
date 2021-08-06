@@ -38,13 +38,14 @@ private:
 	struct x_t {
 		Display *dis;
 		Window win;
-		Atom WM_DELETE_WINDOW;
 
 		int scr, root;
 
 		Colormap cmap;
 
 		GLXContext ctx;
+
+    u32 width, height; // Screen width&height
 
 		x_t();
 		~x_t();

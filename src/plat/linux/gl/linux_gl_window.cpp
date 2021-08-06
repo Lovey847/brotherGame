@@ -3,9 +3,6 @@
 #include "linux_gl_window.h"
 #include "linux_key.h"
 
-static constexpr u32 DEF_WIDTH = 1072;
-static constexpr u32 DEF_HEIGHT = 603;
-
 linux_gl_window_t::x_t::x_t() {
 	// Open display
 	dis = XOpenDisplay(NULL);
@@ -64,6 +61,10 @@ linux_gl_window_t::x_t::x_t() {
 		throw log_except("Couldn't create colormap!");
 	}
 
+  // Get width and height of screen
+  width = WidthOfScreen(ScreenOfDisplay(dis, scr));
+  height = HeightOfScreen(ScreenOfDisplay(dis, scr));
+
 	// Create window
 	// Default value for border_pixmap is CopyFromParent, which fails if the depth
 	// of our window is not the depth of the root window, howeer if border_pixel is
@@ -79,7 +80,7 @@ linux_gl_window_t::x_t::x_t() {
 
 	win = XCreateWindow(dis, root, // Display and parent window
                       0, 0, // Position of window, usually ignored
-                      DEF_WIDTH, DEF_HEIGHT, // Size of window
+                      width, height, // Size of window
                       0, vis->depth, // Border size and depth of window
                       InputOutput, // Window class
                       vis->visual, // Visual
@@ -132,13 +133,12 @@ linux_gl_window_t::x_t::x_t() {
 
 	glXMakeCurrent(dis, win, ctx);
 
-	// Tell window manager to close when
-	// the X window button is pressed
-	WM_DELETE_WINDOW = XInternAtom(dis, "WM_DELETE_WINDOW", False);
-	Atom WM_PROTOCOLS = XInternAtom(dis, "WM_PROTOCOLS", False);
+  // Make a fullscreen window
+  Atom _NET_WM_STATE = XInternAtom(dis, "_NET_WM_STATE", False);
+  Atom _NET_WM_STATE_FULLSCREEN = XInternAtom(dis, "_NET_WM_STATE_FULLSCREEN", False);
 	XChangeProperty(dis, win,
-					WM_PROTOCOLS, XA_ATOM, 32,
-					PropModeAppend, (u8*)&WM_DELETE_WINDOW, 1);
+                  _NET_WM_STATE, XA_ATOM, 32,
+                  PropModeAppend, (u8*)&_NET_WM_STATE_FULLSCREEN, 1);
 }
 
 linux_gl_window_t::x_t::~x_t() {
@@ -155,7 +155,7 @@ linux_gl_window_t::x_t::~x_t() {
 }
 
 linux_gl_window_t::linux_gl_window_t(window_init_t &init) :
-	m_m(init.m), m_i(init.i), m_gl(m_i.mem, init.g.state(), DEF_WIDTH, DEF_HEIGHT)
+	m_m(init.m), m_i(init.i), m_gl(m_i.mem, init.g.state(), x.width, x.height)
 {
 	// Enable detectable autorepeat
 	Bool supported;
@@ -248,11 +248,6 @@ window_loop_ret_t linux_gl_window_t::loop(game_t &game) {
 			XNextEvent(x.dis, &evt);
 
 			switch (evt.type) {
-			case ClientMessage:
-				if ((Atom)evt.xclient.data.l[0] == x.WM_DELETE_WINDOW) return WINDOW_LOOP_SUCCESS;
-
-				break;
-
 			case KeyPress:
 				// Detect autorepeat
 				if (lastPressed == evt.xkey.keycode) break;
