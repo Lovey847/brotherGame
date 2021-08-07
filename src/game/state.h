@@ -32,12 +32,28 @@ struct game_state_map_prop_t {
   uptr imgCount;
 };
 
+// Map editor state
+struct game_state_mapState_t {
+  // Editor cubes
+  map_cube_t cubes[256];
+  uptr cubeCount;
+
+  // Loading zones
+  map_cube_t prevLoad, nextLoad;
+
+  // Current block texture (index into imgNames)
+  uptr tex;
+
+  // Map properties
+  const game_state_map_prop_t *prop;
+};
+
 static constexpr uptr GAME_STATE_MAPCOUNT = 1;
 
 static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   {
     "../gen/data/files/maps/000.map",
-    str_hash("maps/000.map"),
+    str_hash("maps/blank.map"),
     0, str_hash("maps/001.map"),
     str_hash("atlases/000.atl"),
     {
@@ -97,21 +113,11 @@ struct game_state_t {
   // w is always 1.f
   vec4 blockGrid;
 
-  // Current cube texture, index into game_state_texNames
-  uptr blockTexture;
-
   // Block distance from camera
   f32 blockDist;
 
-  // Buffer of cubes ready to be written out
-  map_cube_t editorCubes[256];
-  uptr editorCubeCount;
-
-  // Loading zone to previous map
-  map_cube_t prevLoad;
-
-  // Loading zone to next map
-  map_cube_t nextLoad;
+  game_state_mapState_t maps[GAME_STATE_MAPCOUNT];
+  game_state_mapState_t *curMap;
 #endif
 };
 

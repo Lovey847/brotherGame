@@ -1,3 +1,4 @@
 atlases/global.atl
 atlases/000.atl
 maps/000.map
+maps/blank.map

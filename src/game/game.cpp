@@ -30,6 +30,9 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
 
   p.unmapEntry(mapEnt);
 
+  // Free previous map atlas
+  if (atlasEnt[ATLAS_LEVEL] != PAK_INVALID_ENTRY) p.unmapEntry(atlasEnt[ATLAS_LEVEL]);
+
   // Load map atlas
   atlasEnt[ATLAS_LEVEL] = p.getEntry(state.map.levelAtlas);
   if (atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
@@ -55,13 +58,13 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
     return false;
   }
 
-  state.editorCubeCount = state.map.cubeCount;
+  state.curMap->cubeCount = state.map.cubeCount;
 
   for (uptr i = 0; i < state.map.cubeCount; ++i)
-    state.editorCubes[i] = state.map.cubes[i];
+    state.curMap->cubes[i] = state.map.cubes[i];
 
-  state.prevLoad = state.map.prevLoad;
-  state.nextLoad = state.map.nextLoad;
+  state.curMap->prevLoad = state.map.prevLoad;
+  state.curMap->nextLoad = state.map.nextLoad;
 
   // Free map, we don't need it
   state.map.free(m);
@@ -117,39 +120,28 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 #ifdef GAME_STATE_EDITOR
 
   // Initialize editor vars
+  m_state->curMap = m_state->maps;
+  m_state->curMap->prop = game_state_maps; // TODO: Initialize prop field for all maps!
   m_state->blockDist = 512.f;
   m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
-  m_state->prevLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
-  m_state->prevLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
-  m_state->nextLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
-  m_state->nextLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
+  m_state->curMap->prevLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
+  m_state->curMap->prevLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
+  m_state->curMap->nextLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
+  m_state->curMap->nextLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
 
-  if (game_state_maps[0].hashName) {
-    // Load editor map
-    loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, game_state_maps[0].hashName);
-  } else {
-    // Load level atlas
-    m_atlasEnt[ATLAS_LEVEL] = m_pak.getEntry(game_state_maps[0].atlas);
-    if (m_atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
-      m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-      m_i.mem.free(m_state);
-      throw log_except("Cannot find level atlas!");
-    }
-
-    m_state->r.atlas[ATLAS_LEVEL] = (atlas_t*)m_pak.mapEntry(m_atlasEnt[ATLAS_LEVEL]);
-    if (!m_state->r.atlas[ATLAS_LEVEL]) {
-      m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-      m_i.mem.free(m_state);
-      throw log_except("Cannot map level atlas!");
-    }
+  // Load editor map
+  if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->curMap->prop->hashName)) {
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
+    m_i.mem.free(m_state);
+    throw log_except("Cannot load map into editor!");
   }
 
 #else
 
   // Load first map
   if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, str_hash("maps/000.map"))) {
-    m_pak.unmapEntry(m_state->r.atlas[ATLAS_GLOBAL]);
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
     m_i.mem.free(m_state);
     throw log_except("Cannot load map!");
   }
@@ -179,7 +171,7 @@ static void writeMap(file_handle_t &out, game_state_t &state) {
   static const u8 zeros[sizeof(map_file_t)+sizeof(map_file_cube_t)*255] = {};
   const uptr fileSize =
     sizeof(map_file_t)-sizeof(map_file_cube_t) +
-    state.editorCubeCount*sizeof(map_file_cube_t);
+    state.curMap->cubeCount*sizeof(map_file_cube_t);
 
   out.write(zeros, fileSize);
   file_mapping_t *outMap = out.map(FILE_MAP_READWRITE, 0, fileSize);
@@ -188,21 +180,21 @@ static void writeMap(file_handle_t &out, game_state_t &state) {
   map_file_t *map = (map_file_t*)outMap->data;
 
   map->magic = MAP_MAGIC;
-  map->cubeCount = state.editorCubeCount;
-  map->prevLoad.min.v() = state.prevLoad.min;
-  map->prevLoad.max.v() = state.prevLoad.max;
-  map->nextLoad.min.v() = state.nextLoad.min;
-  map->nextLoad.max.v() = state.nextLoad.max;
-  map->prevLoad.map = game_state_maps[0].prev;
-  map->nextLoad.map = game_state_maps[0].next;
+  map->cubeCount = state.curMap->cubeCount;
+  map->prevLoad.min.v() = state.curMap->prevLoad.min;
+  map->prevLoad.max.v() = state.curMap->prevLoad.max;
+  map->nextLoad.min.v() = state.curMap->nextLoad.min;
+  map->nextLoad.max.v() = state.curMap->nextLoad.max;
+  map->prevLoad.map = state.curMap->prop->prev;
+  map->nextLoad.map = state.curMap->prop->next;
 
-  for (uptr i = 0; i < state.editorCubeCount; ++i) {
-    map->cubes[i].min = state.editorCubes[i].min;
-    map->cubes[i].max = state.editorCubes[i].max;
-    map->cubes[i].img = state.editorCubes[i].img;
+  for (uptr i = 0; i < state.curMap->cubeCount; ++i) {
+    map->cubes[i].min = state.curMap->cubes[i].min;
+    map->cubes[i].max = state.curMap->cubes[i].max;
+    map->cubes[i].img = state.curMap->cubes[i].img;
   }
 
-  map->levelAtlas = game_state_maps[0].atlas;
+  map->levelAtlas = state.curMap->prop->atlas;
 
   outMap->unmap();
 }
@@ -236,11 +228,11 @@ game_update_ret_t game_t::update() {
 
   // Switch cube texture
   if (m_i.input.k.pressed[KEYC_Q]) {
-    if (m_state->blockTexture == 0) m_state->blockTexture = game_state_maps[0].imgCount-1;
-    else --m_state->blockTexture;
+    if (m_state->curMap->tex == 0) m_state->curMap->tex = m_state->curMap->prop->imgCount-1;
+    else --m_state->curMap->tex;
   } else if (m_i.input.k.pressed[KEYC_E]) {
-    if (m_state->blockTexture == game_state_maps[0].imgCount-1) m_state->blockTexture = 0;
-    else ++m_state->blockTexture;
+    if (m_state->curMap->tex == m_state->curMap->prop->imgCount-1) m_state->curMap->tex = 0;
+    else ++m_state->curMap->tex;
   }
 
   // Modifier keys
@@ -287,17 +279,17 @@ game_update_ret_t game_t::update() {
     vec4_ivec4(ivec4_vec4(cubePos/m_state->blockGrid))*m_state->blockGrid;
 
   // Add & remove cubes
-  if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
-  else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->editorCubeCount > 0)) {
+  if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->curMap->cubeCount < 255)) ++m_state->curMap->cubeCount;
+  else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->curMap->cubeCount > 0)) {
     // Remove cube at cubePos
-    for (uptr i = 0; i < m_state->editorCubeCount; ++i) {
-      if ((m_state->editorCubes[i].min.f[0] == cubePos.f[0]) &&
-          (m_state->editorCubes[i].min.f[1] == cubePos.f[1]) &&
-          (m_state->editorCubes[i].min.f[2] == cubePos.f[2]))
+    for (uptr i = 0; i < m_state->curMap->cubeCount; ++i) {
+      if ((m_state->curMap->cubes[i].min.f[0] == cubePos.f[0]) &&
+          (m_state->curMap->cubes[i].min.f[1] == cubePos.f[1]) &&
+          (m_state->curMap->cubes[i].min.f[2] == cubePos.f[2]))
       {
-        memcpy((void*)(m_state->editorCubes+i),
-               m_state->editorCubes+i+1,
-               (--m_state->editorCubeCount-i)*sizeof(map_cube_t));
+        memcpy((void*)(m_state->curMap->cubes+i),
+               m_state->curMap->cubes+i+1,
+               (--m_state->curMap->cubeCount-i)*sizeof(map_cube_t));
         break;
       }
     }
@@ -305,23 +297,23 @@ game_update_ret_t game_t::update() {
 
   // Add loading zones
   if (m_i.input.k.pressed[KEYC_INSERT]) {
-    m_state->prevLoad.min = cubePos;
-    m_state->prevLoad.max =
+    m_state->curMap->prevLoad.min = cubePos;
+    m_state->curMap->prevLoad.max =
       cubePos + m_state->blockSize*m_state->blockGrid;
   } else if (m_i.input.k.pressed[KEYC_DELETE]) {
-    m_state->nextLoad.min = cubePos;
-    m_state->nextLoad.max =
+    m_state->curMap->nextLoad.min = cubePos;
+    m_state->curMap->nextLoad.max =
       cubePos + m_state->blockSize*m_state->blockGrid;
   }
 
-  m_state->editorCubes[m_state->editorCubeCount].min = cubePos;
-  m_state->editorCubes[m_state->editorCubeCount].max =
+  m_state->curMap->cubes[m_state->curMap->cubeCount].min = cubePos;
+  m_state->curMap->cubes[m_state->curMap->cubeCount].max =
     cubePos + m_state->blockSize*m_state->blockGrid;
-  m_state->editorCubes[m_state->editorCubeCount].img = game_state_maps[0].imgNames[m_state->blockTexture];
+  m_state->curMap->cubes[m_state->curMap->cubeCount].img = m_state->curMap->prop->imgNames[m_state->curMap->tex];
 
   // Write map
   if (m_i.input.k.pressed[KEYC_F2]) {
-    file_handle_t *out = m_i.fileSys.open(game_state_maps[0].filename, FILE_MODE_READWRITE);
+    file_handle_t *out = m_i.fileSys.open(m_state->curMap->prop->filename, FILE_MODE_READWRITE);
     if (out) writeMap(*out, *m_state);
     out->close();
   }
