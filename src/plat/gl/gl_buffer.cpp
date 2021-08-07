@@ -101,12 +101,11 @@ void gl_buffers_t::addBaseVerts(uptr vertCount, const gl_vertex_t *verts,
   m_baseInd = m_curInd;
 }
 
-void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool persistent) {
+void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool persistent, atlas_id_t atlas) {
   gl_vertex_t verts[4]; // Quad vertices, drawn 4 times
 
   // Setup texture coordinates
-  // TODO: This should load from ATLAS_LEVEL!
-  verts[0].coord = tex.imgCoord(ATLAS_LEVEL, c.img);
+  verts[0].coord = tex.imgCoord(atlas, c.img);
   verts[1].coord = (verts[0].coord +
                     (verts[0].coord.shuffle<0x2323>()&vec4(vec4_int_init(-1, 0, 0, 0))));
   verts[2].coord = (verts[0].coord +

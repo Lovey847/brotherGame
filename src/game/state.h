@@ -36,8 +36,8 @@ static constexpr uptr GAME_STATE_MAPCOUNT = 1;
 
 static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   {
-    "000.map",
-    0,
+    "../gen/data/files/maps/000.map",
+    str_hash("maps/000.map"),
     0, str_hash("maps/001.map"),
     str_hash("atlases/000.atl"),
     {
@@ -106,6 +106,12 @@ struct game_state_t {
   // Buffer of cubes ready to be written out
   map_cube_t editorCubes[256];
   uptr editorCubeCount;
+
+  // Loading zone to previous map
+  map_cube_t prevLoad;
+
+  // Loading zone to next map
+  map_cube_t nextLoad;
 #endif
 };
 

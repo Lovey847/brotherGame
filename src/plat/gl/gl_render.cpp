@@ -181,6 +181,17 @@ ubool gl_render_t::render(game_state_render_t &state) {
     m_buf.addCube(m_texture, state.game->editorCubes[i], false);
   }
 
+  // Draw loading zones
+  map_cube_t cube;
+
+  cube = state.game->prevLoad;
+  cube.img = str_hash("prevLoad");
+  m_buf.addCube(m_texture, cube, false, ATLAS_GLOBAL);
+
+  cube = state.game->nextLoad;
+  cube.img = str_hash("nextLoad");
+  m_buf.addCube(m_texture, cube, false, ATLAS_GLOBAL);
+
 #endif
 
   m_buf.flushBuffers();

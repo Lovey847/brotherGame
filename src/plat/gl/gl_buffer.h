@@ -5,6 +5,7 @@
 #include "opengl.h"
 #include "gl_vertex.h"
 #include "game/map.h"
+#include "game/atlas.h"
 
 // Dither matrix size
 static constexpr u32 GLBUFFER_DITHER_SIZE = 16;
@@ -66,8 +67,8 @@ public:
     m_baseVert = m_baseInd = 0;
   }
 
-  // Add persistent game cube to screen
-  void addCube(const gl_texture_t &tex, const map_cube_t &c, ubool base = true);
+  // Add game cube to screen
+  void addCube(const gl_texture_t &tex, const map_cube_t &c, ubool base = true, atlas_id_t atlas = ATLAS_LEVEL);
 
   // Render buffer contents
   void flushBuffers();

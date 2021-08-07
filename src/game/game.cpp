@@ -60,6 +60,9 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
   for (uptr i = 0; i < state.map.cubeCount; ++i)
     state.editorCubes[i] = state.map.cubes[i];
 
+  state.prevLoad = state.map.prevLoad;
+  state.nextLoad = state.map.nextLoad;
+
   // Free map, we don't need it
   state.map.free(m);
 
@@ -117,6 +120,10 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->blockDist = 512.f;
   m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
+  m_state->prevLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
+  m_state->prevLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
+  m_state->nextLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
+  m_state->nextLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
 
   if (game_state_maps[0].hashName) {
     // Load editor map
@@ -170,17 +177,22 @@ game_t::~game_t() {
 
 static void writeMap(file_handle_t &out, game_state_t &state) {
   static const u8 zeros[sizeof(map_file_t)+sizeof(map_file_cube_t)*255] = {};
+  const uptr fileSize =
+    sizeof(map_file_t)-sizeof(map_file_cube_t) +
+    state.editorCubeCount*sizeof(map_file_cube_t);
 
-  out.write(zeros, sizeof(map_file_t)-sizeof(map_file_cube_t) + state.editorCubeCount*sizeof(map_file_cube_t));
-  file_mapping_t *outMap = out.map(FILE_MAP_READWRITE, 0, state.editorCubeCount*sizeof(map_file_cube_t));
+  out.write(zeros, fileSize);
+  file_mapping_t *outMap = out.map(FILE_MAP_READWRITE, 0, fileSize);
   if (!outMap) throw log_except("Couldn't map output map file!");
 
   map_file_t *map = (map_file_t*)outMap->data;
 
   map->magic = MAP_MAGIC;
   map->cubeCount = state.editorCubeCount;
-  // TODO: Load a value into these!
-  map->prevLoad.min = map->prevLoad.max = map->nextLoad.min = map->nextLoad.max = vec4(0.f);
+  map->prevLoad.min.v() = state.prevLoad.min;
+  map->prevLoad.max.v() = state.prevLoad.max;
+  map->nextLoad.min.v() = state.nextLoad.min;
+  map->nextLoad.max.v() = state.nextLoad.max;
   map->prevLoad.map = game_state_maps[0].prev;
   map->nextLoad.map = game_state_maps[0].next;
 
@@ -289,6 +301,17 @@ game_update_ret_t game_t::update() {
         break;
       }
     }
+  }
+
+  // Add loading zones
+  if (m_i.input.k.pressed[KEYC_INSERT]) {
+    m_state->prevLoad.min = cubePos;
+    m_state->prevLoad.max =
+      cubePos + m_state->blockSize*m_state->blockGrid;
+  } else if (m_i.input.k.pressed[KEYC_DELETE]) {
+    m_state->nextLoad.min = cubePos;
+    m_state->nextLoad.max =
+      cubePos + m_state->blockSize*m_state->blockGrid;
   }
 
   m_state->editorCubes[m_state->editorCubeCount].min = cubePos;
