@@ -36,13 +36,13 @@ struct hdr_t {
   u32 magic;
   endian_u32 imageCount;
   pak_ptr_t<atlas_col_t> data;
-  pak_ptr_t<endian_ivec4> imgDim;
+  pak_ptr_t<endian_ivec2_2> imgDim;
 };
 
 static constexpr uptr MAXIMG = 256;
 static atlas_col_t data[ATLAS_WIDTH*ATLAS_HEIGHT];
 static str_hash_t imgNames[MAXIMG], *curImgName = imgNames;
-static endian_ivec4 imgDim[MAXIMG], *curDim = imgDim;
+static endian_ivec2_2 imgDim[MAXIMG], *curDim = imgDim;
 
 // Read image data from BMP file
 static void readData(file_handle_t *bmp) {
@@ -107,7 +107,7 @@ static void readImage(file_handle_t *txt) {
   *curImgName++ = str_hashR(readLine(txt));
 
   // Read dimensions
-  ivec4 dim;
+  ivec2_2 dim;
 
   dim.i[0] = str_strnum<i32>(readLine(txt));
   dim.i[1] = str_strnum<i32>(readLine(txt));
@@ -119,6 +119,10 @@ static void readImage(file_handle_t *txt) {
 
 // Read atlas from atlas.txt
 static void readAtlas(file_handle_t *txt) {
+  // Reset all parameters
+  curDim = imgDim;
+  curImgName = imgNames;
+
   // Read atlas name
   char name[256];
   strcpy(name, readLine(txt));

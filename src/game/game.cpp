@@ -150,7 +150,8 @@ static void writeMap(file_handle_t &out, game_state_t &state) {
 
   map->magic = MAP_MAGIC;
   map->cubeCount = state.editorCubeCount;
-  map->prevLoad.min = map->prevLoad.max = map->nextLoad.min = map->nextLoad.max = vec4(0.f); // TODO: Load a value into these!
+  // TODO: Load a value into these!
+  map->prevLoad.min = map->prevLoad.max = map->nextLoad.min = map->nextLoad.max = vec4(0.f);
   map->prevLoad.map = GAME_STATE_PREVMAP;
   map->nextLoad.map = GAME_STATE_NEXTMAP;
 
@@ -255,7 +256,7 @@ game_update_ret_t game_t::update() {
 
   // Write map
   if (m_i.input.k.pressed[KEYC_F2]) {
-    file_handle_t *out = m_i.fileSys.open("editor.map", FILE_MODE_READWRITE);
+    file_handle_t *out = m_i.fileSys.open(game_state_mapFilename, FILE_MODE_READWRITE);
     if (out) writeMap(*out, *m_state);
     out->close();
   }
