@@ -67,6 +67,10 @@ struct game_state_t {
   // Size of placeable cube
   vec4 blockSize;
 
+  // Current cube grid, power of 2
+  // w is always 1.f
+  vec4 blockGrid;
+
   // Current cube texture, index into game_state_texNames
   uptr blockTexture;
 

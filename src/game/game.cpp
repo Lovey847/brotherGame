@@ -62,7 +62,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set initial position and direction
-	m_state->pos = vec4(0.f, 0.f, -256.f, 1.f);
+	m_state->pos = vec4(1024.f, 1024.f, 1024.f, 1.f);
   m_state->yaw = (f32)M_PI*0.5f;
   m_state->pitch = 0.f;
 
@@ -101,7 +101,8 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 #ifdef GAME_STATE_EDITOR
   // Initialize editor vars
   m_state->blockDist = 512.f;
-  m_state->blockSize = vec4(128.f, 128.f, 128.f, 0.f);
+  m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
+  m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
 
   for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
     if (i >= 255) {
@@ -179,9 +180,6 @@ game_update_ret_t game_t::update() {
   const f32 s = sinf(m_state->yaw);
 
   vec4 forward = vec4(c, 0.f, s, 0.f);
-  forward *= vec4(cosf(m_state->pitch), 0.f, cosf(m_state->pitch), 0.f);
-  forward += vec4(0.f, sinf(m_state->pitch), 0.f, 0.f);
-
   vec4 left = vec4(-s, 0.f, c, 0.f);
 
   // Fly around map
@@ -189,6 +187,9 @@ game_update_ret_t game_t::update() {
   if (m_i.input.k.down[KEYC_S]) m_state->pos -= forward*8.f;
   if (m_i.input.k.down[KEYC_A]) m_state->pos += left*8.f;
   if (m_i.input.k.down[KEYC_D]) m_state->pos -= left*8.f;
+
+  forward *= vec4(cosf(m_state->pitch), 0.f, cosf(m_state->pitch), 0.f);
+  forward += vec4(0.f, sinf(m_state->pitch), 0.f, 0.f);
 
   // Add & remove cubes
   if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
@@ -203,28 +204,52 @@ game_update_ret_t game_t::update() {
     else ++m_state->blockTexture;
   }
 
+  // Modifier keys
   if (m_i.input.k.down[KEYC_CTRL]) {
+
     // Change cube width
-    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[0] += 4.f;
-    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[0] -= 4.f;
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[0] += 1.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[0] -= 1.f;
+
+    // Move down
+    if (m_i.input.k.down[KEYC_SPACE]) m_state->pos.f[1] -= 8.f;
+
   } else if (m_i.input.k.down[KEYC_ALT]) {
+
     // Change cube height
-    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[1] += 4.f;
-    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[1] -= 4.f;
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[1] += 1.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[1] -= 1.f;
+
   } else if (m_i.input.k.down[KEYC_SHIFT]) {
+
     // Change cube depth
-    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[2] += 4.f;
-    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[2] -= 4.f;
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[2] += 1.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[2] -= 1.f;
+
   } else {
+
     // Set cube distance from camera
-    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockDist += 8.f;
-    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockDist -= 8.f;
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockDist += m_state->blockGrid.f[0];
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockDist -= m_state->blockGrid.f[0];
+
+    // Move up
+    if (m_i.input.k.down[KEYC_SPACE]) m_state->pos.f[1] += 8.f;
+
   }
 
-  m_state->editorCubes[m_state->editorCubeCount].min =
-    m_state->pos + forward*m_state->blockDist - m_state->blockSize;
+  // Change grid
+  if (m_i.input.k.pressed[KEYC_OPENBRACKET]) m_state->blockGrid *= vec4(2.f, 2.f, 2.f, 1.f);
+  else if (m_i.input.k.pressed[KEYC_CLOSEBRACKET]) m_state->blockGrid *= vec4(0.5f, 0.5f, 0.5f, 1.f);
+
+  vec4 cubePos = m_state->pos + forward*m_state->blockDist;
+
+  // Align cubePos to grid
+  cubePos =
+    vec4_ivec4(ivec4_vec4(cubePos/m_state->blockGrid))*m_state->blockGrid;
+
+  m_state->editorCubes[m_state->editorCubeCount].min = cubePos;
   m_state->editorCubes[m_state->editorCubeCount].max =
-    m_state->pos + forward*m_state->blockDist + m_state->blockSize;
+    cubePos + m_state->blockSize*m_state->blockGrid;
   m_state->editorCubes[m_state->editorCubeCount].img = game_state_texNames[m_state->blockTexture];
 
 	return GAME_UPDATE_CONTINUE;
