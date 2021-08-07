@@ -10,22 +10,44 @@
 
 #ifdef GAME_STATE_EDITOR
 
-// Cube texture name list
-static const str_hash_t game_state_texNames[] = {
-  str_hash("gray"),
-  str_hash("tutorial"),
-  str_hash("wood"),
+// Map properties
+struct game_state_map_prop_t {
+  // Map filename
+  const char *filename;
+
+  // Map string hash name
+  // 0 to load no map
+  str_hash_t hashName;
+
+  // Previous and next map string hashes
+  str_hash_t prev, next;
+
+  // Map atlas
+  str_hash_t atlas;
+
+  // Atlas image names
+  const str_hash_t imgNames[64];
+
+  // Atlas image count
+  uptr imgCount;
 };
 
-// Maps for loading zones
-static constexpr str_hash_t GAME_STATE_PREVMAP = str_hash("maps/000.map");
-static constexpr str_hash_t GAME_STATE_NEXTMAP = str_hash("maps/001.map");
+static constexpr uptr GAME_STATE_MAPCOUNT = 1;
 
-// Level atlas for map
-static constexpr str_hash_t GAME_STATE_LEVELATLAS = str_hash("atlases/000.atl");
-
-// Map filename
-static const char game_state_mapFilename[] = "000.map";
+static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
+  {
+    "000.map",
+    str_hash("maps/000.map"),
+    0, str_hash("maps/001.map"),
+    str_hash("atlases/000.atl"),
+    {
+      str_hash("gray"),
+      str_hash("tutorial"),
+      str_hash("wood"),
+    },
+    3,
+  },
+};
 
 #endif
 
