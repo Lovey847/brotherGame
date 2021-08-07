@@ -104,15 +104,17 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
 
-  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
-    if (i >= 255) {
-      m_state->map.free(m_i.mem);
-      m_pak.unmapEntry(m_atlasEnt[ATLAS_LEVEL]);
-      m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-      m_i.mem.free(m_state);
-      throw log_except("Map is too big!");
-    }
+  if (m_state->map.cubeCount >= 255) {
+    m_state->map.free(m_i.mem);
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_LEVEL]);
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
+    m_i.mem.free(m_state);
+    throw log_except("Map is too big!");
+  }
 
+  m_state->editorCubeCount = m_state->map.cubeCount;
+
+  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
     m_state->editorCubes[i] = m_state->map.cubes[i];
   }
 
@@ -138,7 +140,6 @@ game_t::~game_t() {
 #ifndef GAME_STATE_EDITOR
 #else // GAME_STATE_EDITOR
 
-#if 0
 static void writeMap(file_handle_t &out, game_state_t &state) {
   static const u8 zeros[sizeof(map_file_t)+sizeof(map_file_cube_t)*255] = {};
 
@@ -161,8 +162,9 @@ static void writeMap(file_handle_t &out, game_state_t &state) {
   }
 
   map->levelAtlas = GAME_STATE_LEVELATLAS;
+
+  outMap->unmap();
 }
-#endif
 
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
@@ -251,6 +253,13 @@ game_update_ret_t game_t::update() {
   m_state->editorCubes[m_state->editorCubeCount].max =
     cubePos + m_state->blockSize*m_state->blockGrid;
   m_state->editorCubes[m_state->editorCubeCount].img = game_state_texNames[m_state->blockTexture];
+
+  // Write map
+  if (m_i.input.k.pressed[KEYC_F2]) {
+    file_handle_t *out = m_i.fileSys.open("editor.map", FILE_MODE_READWRITE);
+    if (out) writeMap(*out, *m_state);
+    out->close();
+  }
 
 	return GAME_UPDATE_CONTINUE;
 }

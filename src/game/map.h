@@ -64,7 +64,11 @@ struct map_t {
 
   // Free map data
   FINLINE void free(mem_t &m) {
-    if (cubes) m.free(cubes);
+    if (cubes) {
+      m.free(cubes);
+      cubes = NULL;
+      cubeCount = 0;
+    }
   }
 };
 
