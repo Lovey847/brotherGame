@@ -23,6 +23,14 @@ static constexpr str_hash_t GAME_STATE_NEXTMAP = str_hash("maps/first.map");
 // Level atlas for map
 static constexpr str_hash_t GAME_STATE_LEVELATLAS = str_hash("atlases/global.atl");
 
+// Map filename
+static const char game_state_mapFilename[] = "../gen/data/files/maps/000.map";
+
+// Map list
+static const str_hash_t game_state_mapList[] = {
+  str_hash("maps/000.map"),
+};
+
 #endif
 
 struct game_state_t;

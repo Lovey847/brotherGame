@@ -4,6 +4,7 @@
 #include <math.h>
 
 // Load map into game and renderer
+#if 0
 static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlasEnt, str_hash_t mapName) {
   // Load map into renderer
   state.r.load = true;
@@ -17,14 +18,14 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
 
   const map_file_t *map = (map_file_t*)p.mapEntry(mapEnt);
   if (!map) {
-    log_warning("Cannot map map entry!");
+    log_warning("Cannot map level entry!");
     return false;
   }
 
   try {
     state.map.load(m, *map);
   } catch (const log_except_t &err) {
-    log_warning("Cannot load map: %s", err.str());
+    log_warning("Cannot load level: %s", err.str());
     return false;
   }
 
@@ -33,20 +34,21 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
   // Load map atlas
   atlasEnt[ATLAS_LEVEL] = p.getEntry(state.map.levelAtlas);
   if (atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
-    log_warning("Cannot find map atlas!");
+    log_warning("Cannot find level atlas!");
     state.map.free(m);
     return false;
   }
 
   state.r.atlas[ATLAS_LEVEL] = (atlas_t*)p.mapEntry(atlasEnt[ATLAS_LEVEL]);
   if (!state.r.atlas[ATLAS_LEVEL]) {
-    log_warning("Cannot map map atlas!");
+    log_warning("Cannot map level atlas!");
     state.map.free(m);
     return false;
   }
 
   return true;
 }
+#endif
 
 game_t::game_t(interfaces_t &i, const args_t &args) :
   m_i(i), m_a(args),
@@ -91,34 +93,31 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
     throw log_except("Cannot map atlases/global.atl!");
   }
 
-  // Load map
-  if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, str_hash("maps/first.map"))) {
-    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-    m_i.mem.free(m_state);
-    throw log_except("Cannot load maps/first.map!");
-  }
-
 #ifdef GAME_STATE_EDITOR
+
   // Initialize editor vars
   m_state->blockDist = 512.f;
   m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
 
-  if (m_state->map.cubeCount >= 255) {
-    m_state->map.free(m_i.mem);
-    m_pak.unmapEntry(m_atlasEnt[ATLAS_LEVEL]);
+  // Load level atlas
+  m_atlasEnt[ATLAS_LEVEL] = m_pak.getEntry(GAME_STATE_LEVELATLAS);
+  if (m_atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
     m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
     m_i.mem.free(m_state);
-    throw log_except("Map is too big!");
+    throw log_except("Cannot find level atlas!");
   }
 
-  m_state->editorCubeCount = m_state->map.cubeCount;
-
-  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
-    m_state->editorCubes[i] = m_state->map.cubes[i];
+  m_state->r.atlas[ATLAS_LEVEL] = (atlas_t*)m_pak.mapEntry(m_atlasEnt[ATLAS_LEVEL]);
+  if (!m_state->r.atlas[ATLAS_LEVEL]) {
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
+    m_i.mem.free(m_state);
+    throw log_except("Cannot map level atlas!");
   }
 
-  m_state->map.free(m_i.mem);
+#else
+  // Load first map
+  loadMap(m_i.mem, m_i.fileSys, *m_state, m_atlasEnt, str_hash("maps/000.map"));
 #endif
 }
 

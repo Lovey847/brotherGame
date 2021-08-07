@@ -1,2 +1,2 @@
 atlases/global.atl
-maps/first.map
+maps/000.map
