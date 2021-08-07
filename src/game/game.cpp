@@ -222,10 +222,6 @@ game_update_ret_t game_t::update() {
   forward *= vec4(cosf(m_state->pitch), 0.f, cosf(m_state->pitch), 0.f);
   forward += vec4(0.f, sinf(m_state->pitch), 0.f, 0.f);
 
-  // Add & remove cubes
-  if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
-  else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->editorCubeCount > 0)) --m_state->editorCubeCount;
-
   // Switch cube texture
   if (m_i.input.k.pressed[KEYC_Q]) {
     if (m_state->blockTexture == 0) m_state->blockTexture = game_state_maps[0].imgCount-1;
@@ -277,6 +273,23 @@ game_update_ret_t game_t::update() {
   // Align cubePos to grid
   cubePos =
     vec4_ivec4(ivec4_vec4(cubePos/m_state->blockGrid))*m_state->blockGrid;
+
+  // Add & remove cubes
+  if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
+  else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->editorCubeCount > 0)) {
+    // Remove cube at cubePos
+    for (uptr i = 0; i < m_state->editorCubeCount; ++i) {
+      if ((m_state->editorCubes[i].min.f[0] == cubePos.f[0]) &&
+          (m_state->editorCubes[i].min.f[1] == cubePos.f[1]) &&
+          (m_state->editorCubes[i].min.f[2] == cubePos.f[2]))
+      {
+        memcpy((void*)(m_state->editorCubes+i),
+               m_state->editorCubes+i+1,
+               (--m_state->editorCubeCount-i)*sizeof(map_cube_t));
+        break;
+      }
+    }
+  }
 
   m_state->editorCubes[m_state->editorCubeCount].min = cubePos;
   m_state->editorCubes[m_state->editorCubeCount].max =

@@ -4,7 +4,6 @@ project(gameTest CXX)
 include(TestBigEndian)
 
 # Enable extra warnings and error on warnings
-# in debug builds, also enable tests
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
 	  message(VERBOSE "Enabling extra warnings, and treating them as errors...")
 	  
@@ -12,7 +11,6 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
 		    add_compile_options(-pedantic -Wall -Wextra -Werror)
 		    message(VERBOSE "Added '-pedantic -Wall -Wextra -Werror'")
 	  endif ()
-	  enable_testing()
 endif ()
 
 add_executable(app)
