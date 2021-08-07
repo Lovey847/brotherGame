@@ -45,6 +45,9 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   m_verts = (gl_vertex_t*)(memory+sizeof(gl_buffer_block_t));
   m_inds = (u16*)(memory+sizeof(gl_buffer_block_t)+m_vertSize);
 
+  m_vertCount = vertCount;
+  m_indCount = indCount;
+
   m_curVert = m_curInd = m_baseVert = m_baseInd = 0;
 }
 
@@ -99,7 +102,7 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
 
   // Setup texture coordinates
   // TODO: This should load from ATLAS_LEVEL!
-  verts[0].coord = tex.imgCoord(ATLAS_GLOBAL, c.img);
+  verts[0].coord = tex.imgCoord(ATLAS_LEVEL, c.img);
   verts[1].coord = (verts[0].coord +
                     (verts[0].coord.shuffle<0x2323>()&vec4(vec4_int_init(-1, 0, 0, 0))));
   verts[2].coord = (verts[0].coord +

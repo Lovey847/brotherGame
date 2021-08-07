@@ -3,6 +3,51 @@
 
 #include <math.h>
 
+// Load map into game and renderer
+static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlasEnt, str_hash_t mapName) {
+  // Load map into renderer
+  state.r.load = true;
+
+  // Load map file
+  pak_entry_t mapEnt = p.getEntry(mapName);
+  if (mapEnt == PAK_INVALID_ENTRY) {
+    log_warning("Cannot find map!");
+    return false;
+  }
+
+  const map_file_t *map = (map_file_t*)p.mapEntry(mapEnt);
+  if (!map) {
+    log_warning("Cannot map map entry!");
+    return false;
+  }
+
+  try {
+    state.map.load(m, *map);
+  } catch (const log_except_t &err) {
+    log_warning("Cannot load map: %s", err.str());
+    return false;
+  }
+
+  p.unmapEntry(mapEnt);
+
+  // Load map atlas
+  atlasEnt[ATLAS_LEVEL] = p.getEntry(state.map.levelAtlas);
+  if (atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
+    log_warning("Cannot find map atlas!");
+    state.map.free(m);
+    return false;
+  }
+
+  state.r.atlas[ATLAS_LEVEL] = (atlas_t*)p.mapEntry(atlasEnt[ATLAS_LEVEL]);
+  if (!state.r.atlas[ATLAS_LEVEL]) {
+    log_warning("Cannot map map atlas!");
+    state.map.free(m);
+    return false;
+  }
+
+  return true;
+}
+
 game_t::game_t(interfaces_t &i, const args_t &args) :
   m_i(i), m_a(args),
 
@@ -30,9 +75,10 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   for (atlas_id_t i = 0; i < ATLAS_COUNT; ++i)
     m_atlasEnt[i] = PAK_INVALID_ENTRY;
 
-  // Load global atlas into renderer
+  // Load resources into renderer
   m_state->r.load = true;
 
+  // Load global atlas
   m_atlasEnt[ATLAS_GLOBAL] = m_pak.getEntry(str_hash("atlases/global.atl"));
   if (m_atlasEnt[ATLAS_GLOBAL] == PAK_INVALID_ENTRY) {
     m_i.mem.free(m_state);
@@ -45,24 +91,11 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
     throw log_except("Cannot map atlases/global.atl!");
   }
 
-  // Load map as well
-  pak_entry_t mapEnt = m_pak.getEntry(str_hash("maps/first.map"));
-  if (mapEnt == PAK_INVALID_ENTRY) {
+  // Load map
+  if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, str_hash("maps/first.map"))) {
     m_i.mem.free(m_state);
-    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-    throw log_except("Cannot find maps/first.map!");
+    throw log_except("Cannot load maps/first.map!");
   }
-
-  const map_file_t *map = (map_file_t*)m_pak.mapEntry(mapEnt);
-  if (!map) {
-    m_i.mem.free(m_state);
-    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-    throw log_except("Cannot map maps/first.map!");
-  }
-
-  m_state->map.load(m_i.mem, *map);
-
-  m_pak.unmapEntry(mapEnt);
 }
 
 game_t::~game_t() {
@@ -80,13 +113,14 @@ game_t::~game_t() {
 	m_i.mem.free(m_state);
 }
 
-#ifdef GAME_STATE_EDITOR
+#ifndef GAME_STATE_EDITOR
+#else // GAME_STATE_EDITOR
 
 #if 0
 static void writeMap(file_handle_t &out, game_state_t &state) {
   static const u8 zeros[sizeof(map_file_t)+sizeof(map_file_cube_t)*255] = {};
 
-  out.write(zeros, state.editorCubeCount*sizeof(map_file_cube_t));
+  out.write(zeros, sizeof(map_file_t)-sizeof(map_file_cube_t) + state.editorCubeCount*sizeof(map_file_cube_t));
   file_mapping_t *outMap = out.map(FILE_MAP_READWRITE, 0, state.editorCubeCount*sizeof(map_file_cube_t));
   if (!outMap) throw log_except("Couldn't map output map file!");
 
@@ -137,10 +171,10 @@ game_update_ret_t game_t::update() {
   if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
   else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->editorCubeCount > 0)) --m_state->editorCubeCount;
 
-  if (m_i.input.k.pressed[KEYC_DOWN]) {
+  if (m_i.input.k.pressed[KEYC_Q]) {
     if (m_state->blockTexture == 0) m_state->blockTexture = sizeof(game_state_texNames)/sizeof(str_hash_t)-1;
     else --m_state->blockTexture;
-  } else if (m_i.input.k.pressed[KEYC_UP]) {
+  } else if (m_i.input.k.pressed[KEYC_E]) {
     if (m_state->blockTexture == sizeof(game_state_texNames)/sizeof(str_hash_t)-1) m_state->blockTexture = 0;
     else ++m_state->blockTexture;
   }
@@ -157,6 +191,4 @@ game_update_ret_t game_t::update() {
 	return GAME_UPDATE_CONTINUE;
 }
 
-#else // MAP_EDITOR
-
-#endif // MAP_EDITOR
+#endif // GAME_STATE_EDITOR

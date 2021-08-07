@@ -6,7 +6,7 @@
 
 const vec2_2 gl_texture_atlasOffset[ATLAS_COUNT] = {
   vec2_2(0.f, 0.f, 0.f, 0.f),
-  vec2_2((f32)ATLAS_WIDTH/(f32)GLTEXTURE_WIDTH, 0.f, 0.f, 0.f)
+  vec2_2((f32)ATLAS_WIDTH/(f32)GLTEXTURE_WIDTH, 0.f, 0.f, 0.f),
 };
 
 gl_texture_t::gl_texture_t() :
@@ -54,9 +54,14 @@ vec2_2 gl_texture_t::imgCoord(atlas_id_t atlas, str_hash_t name) const {
 }
 
 ubool gl_texture_t::load(atlas_id_t id, const atlas_t *atlas) {
+  static const u32 atlasIntOffset[ATLAS_COUNT][2] = {
+    {0, 0},
+    {ATLAS_WIDTH, 0},
+  };
+
   if (atlas) {
     GLF(GL::TexSubImage2D(GL::TEXTURE_2D, 0,
-                          gl_texture_atlasOffset[id].i[0], gl_texture_atlasOffset[id].i[1],
+                          atlasIntOffset[id][0], atlasIntOffset[id][1],
                           ATLAS_WIDTH, ATLAS_HEIGHT,
                           GL::RGBA, GL::UNSIGNED_BYTE, atlas->data));
   }

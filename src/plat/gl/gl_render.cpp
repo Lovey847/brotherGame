@@ -54,7 +54,7 @@ static const vec4 identMat[4] = {
 
 gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height) :
 	m_m(m), m_program(vertexCode, fragmentCode),
-  m_buf(m, 2048, 3072)
+  m_buf(m, 6144, 9216)
 {
 	// Log vendor info
 	const char * const vendor = (const char*)GLF(GL::GetString(GL::VENDOR));
