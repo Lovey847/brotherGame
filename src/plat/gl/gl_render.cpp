@@ -14,6 +14,7 @@ static const char vertexCode[] =
 	"\n"
 	"layout(location = 0) in vec4 inPos;\n"
 	"layout(location = 1) in vec2 inCoord;\n"
+  "layout(location = 2) in vec4 inCol;\n"
   "\n"
   "layout(std140) uniform block_t {\n"
   "  mat4 modelView;\n"
@@ -21,16 +22,19 @@ static const char vertexCode[] =
   "} block;\n"
 	"\n"
 	"out vec2 coord;\n"
+  "out vec4 col;\n"
 	"\n"
 	"void main() {\n"
 	"  gl_Position = block.projection*block.modelView * inPos;\n"
 	"  coord = inCoord;\n"
+  "  col = inCol;\n"
 	"}\n";
 
 static const char fragmentCode[] =
 	"#version 330 core\n"
 	"\n"
 	"in vec2 coord;\n"
+  "in vec4 col;\n"
   "\n"
   "layout(std140) uniform block_t {\n"
   "  mat4 modelView;\n"
@@ -42,7 +46,7 @@ static const char fragmentCode[] =
 	"out vec4 fragCol;\n"
 	"\n"
 	"void main() {\n"
-	"  fragCol = texture(tex, coord);\n"
+	"  fragCol = texture(tex, coord)*col;\n"
 	"}\n";
 
 static const vec4 identMat[4] = {

@@ -33,8 +33,12 @@ gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   GLF(GL::VertexAttribPointer(1,
                               2, GL::FLOAT, GL::FALSE,
                               sizeof(gl_vertex_t), (void*)offsetof(gl_vertex_t, coord)));
+  GLF(GL::VertexAttribPointer(2,
+                              4, GL::UNSIGNED_BYTE, GL::TRUE,
+                              sizeof(gl_vertex_t), GLVERTEX_COLOFFSET));
   GLF(GL::EnableVertexAttribArray(0));
   GLF(GL::EnableVertexAttribArray(1));
+  GLF(GL::EnableVertexAttribArray(2));
 
   // Bind uniform buffer range
   GLF(GL::BindBufferRange(GL::UNIFORM_BUFFER, 0, m_ubo, 0, sizeof(gl_buffer_block_t)));
@@ -119,6 +123,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
                   (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
   verts[3].pos = c.min;
 
+  // RGBA colors
+  verts[0].col() = endian_big32(0xc0c0c0ff);
+  verts[1].col() = endian_big32(0xffffffff);
+  verts[2].col() = endian_big32(0x808080ff);
+  verts[3].col() = endian_big32(0xc0c0c0ff);
+
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
 
@@ -130,6 +140,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
                   (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
   verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
                   (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
+
+  // RGBA colors
+  verts[0].col() = endian_big32(0xc0c0c0ff);
+  verts[1].col() = endian_big32(0x808080ff);
+  verts[2].col() = endian_big32(0x808080ff);
+  verts[3].col() = endian_big32(0x404040ff);
 
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
@@ -143,6 +159,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
   verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
                   (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
 
+  // RGBA colors
+  verts[0].col() = endian_big32(0xc0c0c0ff);
+  verts[1].col() = endian_big32(0x808080ff);
+  verts[2].col() = endian_big32(0x808080ff);
+  verts[3].col() = endian_big32(0x404040ff);
+
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
 
@@ -154,6 +176,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
                   (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
   verts[3].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
                   (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
+
+  // RGBA colors
+  verts[0].col() = endian_big32(0xc0c0c0ff);
+  verts[1].col() = endian_big32(0x808080ff);
+  verts[2].col() = endian_big32(0xffffffff);
+  verts[3].col() = endian_big32(0xc0c0c0ff);
 
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
@@ -167,6 +195,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
   verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
                   (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
 
+  // RGBA colors
+  verts[0].col() = endian_big32(0xffffffff);
+  verts[1].col() = endian_big32(0xc0c0c0ff);
+  verts[2].col() = endian_big32(0xc0c0c0ff);
+  verts[3].col() = endian_big32(0x808080ff);
+
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
 
@@ -178,6 +212,12 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool p
                   (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
   verts[3].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
                   (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
+
+  // RGBA colors
+  verts[0].col() = endian_big32(0x808080ff);
+  verts[1].col() = endian_big32(0xc0c0c0ff);
+  verts[2].col() = endian_big32(0x404040ff);
+  verts[3].col() = endian_big32(0x808080ff);
 
   if (persistent) addBaseQuad(verts);
   else addQuad(verts);
