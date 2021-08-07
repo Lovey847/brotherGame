@@ -93,9 +93,30 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 
   // Load map
   if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, str_hash("maps/first.map"))) {
+    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
     m_i.mem.free(m_state);
     throw log_except("Cannot load maps/first.map!");
   }
+
+#ifdef GAME_STATE_EDITOR
+  // Initialize editor vars
+  m_state->blockDist = 512.f;
+  m_state->blockSize = vec4(128.f, 128.f, 128.f, 0.f);
+
+  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
+    if (i >= 255) {
+      m_state->map.free(m_i.mem);
+      m_pak.unmapEntry(m_atlasEnt[ATLAS_LEVEL]);
+      m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
+      m_i.mem.free(m_state);
+      throw log_except("Map is too big!");
+    }
+
+    m_state->editorCubes[i] = m_state->map.cubes[i];
+  }
+
+  m_state->map.free(m_i.mem);
+#endif
 }
 
 game_t::~game_t() {
@@ -163,14 +184,17 @@ game_update_ret_t game_t::update() {
 
   vec4 left = vec4(-s, 0.f, c, 0.f);
 
+  // Fly around map
   if (m_i.input.k.down[KEYC_W]) m_state->pos += forward*8.f;
   if (m_i.input.k.down[KEYC_S]) m_state->pos -= forward*8.f;
   if (m_i.input.k.down[KEYC_A]) m_state->pos += left*8.f;
   if (m_i.input.k.down[KEYC_D]) m_state->pos -= left*8.f;
 
+  // Add & remove cubes
   if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->editorCubeCount < 255)) ++m_state->editorCubeCount;
   else if (m_i.input.k.pressed[KEYC_M_SECONDARY] && (m_state->editorCubeCount > 0)) --m_state->editorCubeCount;
 
+  // Switch cube texture
   if (m_i.input.k.pressed[KEYC_Q]) {
     if (m_state->blockTexture == 0) m_state->blockTexture = sizeof(game_state_texNames)/sizeof(str_hash_t)-1;
     else --m_state->blockTexture;
@@ -179,13 +203,28 @@ game_update_ret_t game_t::update() {
     else ++m_state->blockTexture;
   }
 
-  if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockDist += 8.f;
-  else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockDist -= 8.f;
+  if (m_i.input.k.down[KEYC_CTRL]) {
+    // Change cube width
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[0] += 4.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[0] -= 4.f;
+  } else if (m_i.input.k.down[KEYC_ALT]) {
+    // Change cube height
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[1] += 4.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[1] -= 4.f;
+  } else if (m_i.input.k.down[KEYC_SHIFT]) {
+    // Change cube depth
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockSize.f[2] += 4.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockSize.f[2] -= 4.f;
+  } else {
+    // Set cube distance from camera
+    if (m_i.input.k.pressed[KEYC_M_SCROLLUP]) m_state->blockDist += 8.f;
+    else if (m_i.input.k.pressed[KEYC_M_SCROLLDOWN]) m_state->blockDist -= 8.f;
+  }
 
   m_state->editorCubes[m_state->editorCubeCount].min =
-    m_state->pos + forward*m_state->blockDist - vec4(128.f, 128.f, 128.f, 0.f);
+    m_state->pos + forward*m_state->blockDist - m_state->blockSize;
   m_state->editorCubes[m_state->editorCubeCount].max =
-    m_state->pos + forward*m_state->blockDist + vec4(128.f, 128.f, 128.f, 0.f);
+    m_state->pos + forward*m_state->blockDist + m_state->blockSize;
   m_state->editorCubes[m_state->editorCubeCount].img = game_state_texNames[m_state->blockTexture];
 
 	return GAME_UPDATE_CONTINUE;
