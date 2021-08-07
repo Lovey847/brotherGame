@@ -47,7 +47,7 @@ ubool linux_file_mapping_t::map(uptr offset, uptr sz, uptr realOffset, uptr real
 	}
 
 	// Mapping successful: set public variables
-	data = (void*)((u8*)m_addr + offset);
+	data = (void*)((u8*)m_addr + offset-realOffset);
 	size = sz;
 
 	return true;

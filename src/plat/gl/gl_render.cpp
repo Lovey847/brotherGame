@@ -120,8 +120,9 @@ ubool gl_render_t::render(game_state_render_t &state) {
         m_texture.load(i, state.atlas[i]);
     }
 
-    // Load cube
-    m_buf.addCube(m_texture, state.game->pos, state.game->cube);
+    // Load map
+    for (uptr i = 0; i < state.game->map.cubeCount; ++i)
+      m_buf.addCube(m_texture, state.game->map.cubes[i]);
 
     state.load = false;
   }
@@ -168,6 +169,15 @@ ubool gl_render_t::render(game_state_render_t &state) {
     vec4(0.f, ps, pc, 0.f)*vec4(0.f, c, c, 0.f)*vec4(0.f, z, -z, 0.f);
 
   GLF(GL::Clear(GL::COLOR_BUFFER_BIT|GL::DEPTH_BUFFER_BIT));
+
+#ifdef GAME_STATE_EDITOR
+
+  // Draw editor cubes
+  for (uptr i = 0; i <= state.game->editorCubeCount; ++i) {
+    m_buf.addCube(m_texture, state.game->editorCubes[i], false);
+  }
+
+#endif
 
   m_buf.flushBuffers();
 

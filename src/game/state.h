@@ -1,10 +1,29 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
+#define GAME_STATE_EDITOR
+
 #include "types.h"
 #include "atlas.h"
 #include "pak.h"
-#include "game/cube.h"
+#include "game/map.h"
+
+#ifdef GAME_STATE_EDITOR
+
+// Cube texture name list
+static const str_hash_t game_state_texNames[] = {
+  str_hash("xor"),
+  str_hash("tutorial"),
+};
+
+// Maps for loading zones
+static constexpr str_hash_t GAME_STATE_PREVMAP = str_hash("maps/first.map");
+static constexpr str_hash_t GAME_STATE_NEXTMAP = str_hash("maps/first.map");
+
+// Level atlas for map
+static constexpr str_hash_t GAME_STATE_LEVELATLAS = str_hash("atlases/global.atl");
+
+#endif
 
 struct game_state_t;
 
@@ -33,16 +52,31 @@ struct game_state_t {
   game_state_win_t w; // Window state
   game_state_render_t r; // Render state
 
-  vec4 pos;
+  // Game map
+  map_t map;
 
-  uptr cubeCnt;
-  cube_t cubes[STATE_MAXCUBES];
-  cube_t cube; // TEMP
+  vec4 pos;
 
   f32 fovy; // Vertical field of view
 
   f32 yaw; // Player camera yaw
   f32 pitch; // Player camera pitch
+
+  // Map editor state
+#ifdef GAME_STATE_EDITOR
+  // Size of placeable cube
+  vec4 blockSize;
+
+  // Current cube texture, index into game_state_texNames
+  uptr blockTexture;
+
+  // Block distance from camera
+  f32 blockDist;
+
+  // Buffer of cubes ready to be written out
+  map_cube_t editorCubes[256];
+  uptr editorCubeCount;
+#endif
 };
 
 #endif //GAME_STATE_H

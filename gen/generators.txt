@@ -6,4 +6,5 @@
 # Only lines that end with a slash are recognized
 
 atlas/
+map/
 data/

@@ -117,6 +117,7 @@ target_sources(app PRIVATE
     "${CMAKE_SOURCE_DIR}/src/game/pak.cpp"
     "${CMAKE_SOURCE_DIR}/src/game/atlas.cpp"
     "${CMAKE_SOURCE_DIR}/src/vector.cpp"
+    "${CMAKE_SOURCE_DIR}/src/game/map.cpp"
 
 	  # Interfaces
 	  "${CMAKE_SOURCE_DIR}/src/plat/mem.cpp"
@@ -215,6 +216,7 @@ configure_file("${CMAKE_SOURCE_DIR}/src/config.h.in" "${CMAKE_BINARY_DIR}/config
 # Data generation
 file(STRINGS "${CMAKE_SOURCE_DIR}/gen/generators.txt" GENERATOR_LIST)
 
+set(GENDEPENDENCIES "")
 foreach (GENERATOR ${GENERATOR_LIST})
 	  # Only run the generator on directories that end with slashes
 	  string(LENGTH ${GENERATOR} GENLENGTH)
@@ -235,7 +237,7 @@ foreach (GENERATOR ${GENERATOR_LIST})
 			      "${CMAKE_SOURCE_DIR}/gen"
 			      "${CMAKE_SOURCE_DIR}/src"
 			      "${CMAKE_SOURCE_DIR}/src/plat"
-            "${CMAKE_SOURCE_DIR}/src/game"
+            #"${CMAKE_SOURCE_DIR}/src/game"
 			      "${CMAKE_BINARY_DIR}"
 			      )
 		    target_sources(${GENTARGET} PRIVATE
@@ -265,6 +267,14 @@ foreach (GENERATOR ${GENERATOR_LIST})
 			      COMMENT "Generating ${GENNAME}..."
 			      SOURCES "${CMAKE_SOURCE_DIR}/gen/${GENNAME}/gen.cpp"
 			      )
+
+        # Add target dependencies
+        foreach(GENDEPENDENCY ${GENDEPENDENCIES})
+            message(STATUS "${GENRUNTARGET} depends on ${GENDEPENDENCY}")
+            add_dependencies(${GENRUNTARGET} ${GENDEPENDENCY})
+        endforeach()
+
+        string(CONCAT GENDEPENDENCIES ${GENDEPENDENCIES} ";${GENRUNTARGET}")
 
 		    add_dependencies(app ${GENRUNTARGET})
 	  endif ()

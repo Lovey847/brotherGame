@@ -46,7 +46,8 @@ window_loop_ret_t loop(interfaces_t i, game_t &game) {
 		// Initialize audio
 		audio_init_t audioInit(m, i, game.state(), 44100);
 
-		if (m.audio.setFallback((audio_type_t)0, audioInit) == AUDIO_COUNT) return WINDOW_LOOP_FAILED;
+//		if (m.audio.setFallback((audio_type_t)0, audioInit) == AUDIO_COUNT) return WINDOW_LOOP_FAILED;
+    if (m.audio.setFallback(AUDIO_DUMMY, audioInit) == AUDIO_COUNT) return WINDOW_LOOP_FAILED;
 
 		// Run game loop
 		return m.win->loop(game);

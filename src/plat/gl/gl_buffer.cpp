@@ -3,7 +3,7 @@
 #include "gl_texture.h"
 #include "gl_glf.h"
 #include "opengl.h"
-#include "game/cube.h"
+#include "game/map.h"
 
 gl_buffers_t::gl_buffers_t(mem_t &m, uptr vertCount, uptr indCount) : m_m(m) {
   // Buffer sizes, used when orphaning buffers
@@ -94,7 +94,7 @@ void gl_buffers_t::addBaseVerts(uptr vertCount, const gl_vertex_t *verts,
   m_baseInd = m_curInd;
 }
 
-void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
+void gl_buffers_t::addCube(const gl_texture_t &tex, const map_cube_t &c, ubool persistent) {
   gl_vertex_t verts[4]; // Quad vertices, drawn 4 times
 
   // Setup texture coordinates
@@ -108,82 +108,76 @@ void gl_buffers_t::addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c) {
                     (verts[0].coord.shuffle<0x2323>()&vec4(vec4_int_init(-1, -1, 0, 0))));
 
   // Left side
-  if (pos.f[0] < c.min.f[0]) {
-    verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
-    verts[1].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
-    verts[2].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
-    verts[3].pos = c.min;
+  verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
+  verts[1].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
+  verts[2].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
+  verts[3].pos = c.min;
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 
   // Right side
-  else if (pos.f[0] > c.max.f[0]) {
-    verts[0].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
-    verts[1].pos = c.max;
-    verts[2].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
-    verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
+  verts[0].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
+  verts[1].pos = c.max;
+  verts[2].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
+  verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 
   // Bottom side
-  if (pos.f[1] < c.min.f[1]) {
-    verts[0].pos = c.min;
-    verts[1].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
-    verts[2].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
-    verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
+  verts[0].pos = c.min;
+  verts[1].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
+  verts[2].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
+  verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 
   // Top side
-  else if (pos.f[1] > c.max.f[1]) {
-    verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
-    verts[1].pos = c.max;
-    verts[2].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
-    verts[3].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
+  verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
+  verts[1].pos = c.max;
+  verts[2].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
+  verts[3].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 
   // Front side
-  if (pos.f[2] < c.min.f[2]) {
-    verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
-    verts[1].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
-    verts[2].pos = c.min;
-    verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
+  verts[0].pos = ((c.min&vec4(vec4_int_init(-1, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, 0, 0))));
+  verts[1].pos = ((c.min&vec4(vec4_int_init(0, 0, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, -1, 0, 0))));
+  verts[2].pos = c.min;
+  verts[3].pos = ((c.min&vec4(vec4_int_init(0, -1, -1, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, 0, 0))));
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 
   // Back side
-  else if (pos.f[2] > c.max.f[2]) {
-    verts[0].pos = c.max;
-    verts[1].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
-    verts[2].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
-    verts[3].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
-                    (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
+  verts[0].pos = c.max;
+  verts[1].pos = ((c.min&vec4(vec4_int_init(-1, 0, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, -1, -1, 0))));
+  verts[2].pos = ((c.min&vec4(vec4_int_init(0, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(-1, 0, -1, 0))));
+  verts[3].pos = ((c.min&vec4(vec4_int_init(-1, -1, 0, -1))) |
+                  (c.max&vec4(vec4_int_init(0, 0, -1, 0))));
 
-    addBaseQuad(verts);
-  }
+  if (persistent) addBaseQuad(verts);
+  else addQuad(verts);
 }
 
 void gl_buffers_t::flushBuffers() {

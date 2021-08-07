@@ -4,7 +4,7 @@
 #include "endianUtil.h"
 #include "file.h"
 #include "log.h"
-#include "atlas.h"
+#include "game/atlas.h"
 
 #include <cstring>
 

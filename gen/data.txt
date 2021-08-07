@@ -1,1 +1,2 @@
 atlases/global.atl
+maps/first.map

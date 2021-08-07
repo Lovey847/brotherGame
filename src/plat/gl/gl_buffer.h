@@ -4,7 +4,7 @@
 #include "types.h"
 #include "opengl.h"
 #include "gl_vertex.h"
-#include "game/cube.h"
+#include "game/map.h"
 
 // Dither matrix size
 static constexpr u32 GLBUFFER_DITHER_SIZE = 16;
@@ -67,8 +67,7 @@ public:
   }
 
   // Add persistent game cube to screen
-  // Culls invisible sides
-  void addCube(const gl_texture_t &tex, vec4 pos, const cube_t &c);
+  void addCube(const gl_texture_t &tex, const map_cube_t &c, ubool base = true);
 
   // Render buffer contents
   void flushBuffers();
