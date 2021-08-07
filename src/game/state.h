@@ -48,13 +48,25 @@ struct game_state_mapState_t {
   const game_state_map_prop_t *prop;
 };
 
-static constexpr uptr GAME_STATE_MAPCOUNT = 1;
+static constexpr uptr GAME_STATE_MAPCOUNT = 2;
 
 static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   {
     "../gen/data/files/maps/000.map",
-    str_hash("maps/blank.map"),
+    str_hash("maps/000.map"),
     0, str_hash("maps/001.map"),
+    str_hash("atlases/000.atl"),
+    {
+      str_hash("gray"),
+      str_hash("tutorial"),
+      str_hash("wood"),
+    },
+    3,
+  },
+  {
+    "../gen/data/files/maps/001.map",
+    str_hash("maps/001.map"),
+    str_hash("maps/000.map"), str_hash("maps/002.map"),
     str_hash("atlases/000.atl"),
     {
       str_hash("gray"),
@@ -89,7 +101,6 @@ struct game_state_render_t {
 };
 
 // Game state struct
-static constexpr uptr STATE_MAXCUBES = 256;
 struct game_state_t {
   game_state_win_t w; // Window state
   game_state_render_t r; // Render state
@@ -106,6 +117,7 @@ struct game_state_t {
 
   // Map editor state
 #ifdef GAME_STATE_EDITOR
+
   // Size of placeable cube
   vec4 blockSize;
 
@@ -118,6 +130,7 @@ struct game_state_t {
 
   game_state_mapState_t maps[GAME_STATE_MAPCOUNT];
   game_state_mapState_t *curMap;
+
 #endif
 };
 

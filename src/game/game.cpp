@@ -120,21 +120,20 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
 #ifdef GAME_STATE_EDITOR
 
   // Initialize editor vars
-  m_state->curMap = m_state->maps;
-  m_state->curMap->prop = game_state_maps; // TODO: Initialize prop field for all maps!
   m_state->blockDist = 512.f;
   m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
-  m_state->curMap->prevLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
-  m_state->curMap->prevLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
-  m_state->curMap->nextLoad.min = vec4(-8192.f, -8192.f, -8192.f, 1.f);
-  m_state->curMap->nextLoad.max = vec4(-8191.f, -8191.f, -8191.f, 1.f);
 
-  // Load editor map
-  if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->curMap->prop->hashName)) {
-    m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-    m_i.mem.free(m_state);
-    throw log_except("Cannot load map into editor!");
+  // Load editor maps
+  for (uptr i = 0; i < GAME_STATE_MAPCOUNT; ++i) {
+    m_state->curMap = m_state->maps+i;
+    m_state->curMap->prop = game_state_maps+i;
+
+    if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->curMap->prop->hashName)) {
+      m_pak.unmapEntry(m_atlasEnt[ATLAS_GLOBAL]);
+      m_i.mem.free(m_state);
+      throw log_except("Cannot load map into editor!");
+    }
   }
 
 #else
@@ -201,6 +200,12 @@ static void writeMap(file_handle_t &out, game_state_t &state) {
 
 game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
+
+  // Change map
+  if (m_i.input.k.pressed[KEYC_LEFT] && (m_state->curMap < m_state->maps+GAME_STATE_MAPCOUNT-1))
+    ++m_state->curMap;
+  else if (m_i.input.k.pressed[KEYC_RIGHT] && (m_state->curMap > m_state->maps))
+    --m_state->curMap;
 
   m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
   m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
