@@ -58,22 +58,24 @@ static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
     str_hash("atlases/000.atl"),
     {
       str_hash("gray"),
+      str_hash("black"),
       str_hash("tutorial"),
       str_hash("wood"),
     },
-    3,
+    4,
   },
   {
     "../gen/data/files/maps/001.map",
     str_hash("maps/001.map"),
     str_hash("maps/000.map"), 0,
-    str_hash("atlases/000.atl"),
+    str_hash("atlases/001.atl"),
     {
       str_hash("gray"),
-      str_hash("tutorial"),
+      str_hash("black"),
+      str_hash("secret"),
       str_hash("wood"),
     },
-    3,
+    4,
   },
 };
 

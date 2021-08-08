@@ -5,10 +5,10 @@
 
 // Game player properties
 static constexpr f32 PLAYER_GRAVITY = -0.15f;
-static constexpr vec4 PLAYER_BBOX = vec4(48.f, 64.f, 48.f, 0.f);
+static constexpr vec4 PLAYER_BBOX = vec4(40.f, 64.f, 40.f, 0.f);
 static constexpr f32 PLAYER_SPD = 4.f;
 static constexpr f32 PLAYER_MAXFALL = -10.f;
-static constexpr f32 PLAYER_JUMPHEIGHT = 5.f;
+static constexpr f32 PLAYER_JUMPHEIGHT = 4.8f;
 
 // Load map into game and renderer
 static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlasEnt, str_hash_t mapName) {
@@ -241,7 +241,7 @@ game_update_ret_t game_t::update() {
   if (m_i.input.k.down[KEYC_D]) offset -= left*PLAYER_SPD;
 
   // We can only jump if we're on the ground
-  if (m_i.input.k.pressed[KEYC_SPACE] && m_state->player.onGround) m_state->player.vspeed = PLAYER_JUMPHEIGHT;
+  if (m_i.input.k.down[KEYC_SPACE] && m_state->player.onGround) m_state->player.vspeed = PLAYER_JUMPHEIGHT;
 
   // Apply gravity
   m_state->player.vspeed += PLAYER_GRAVITY;

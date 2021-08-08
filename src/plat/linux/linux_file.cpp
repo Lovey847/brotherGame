@@ -185,7 +185,7 @@ file_mapping_t *file_handle_t::map(file_mapmode_t mode, uptr offset, uptr size) 
 	return (file_mapping_t*)ret;
 }
 
-linux_file_system_t::linux_file_system_t(mem_t &mem) : m(mem), m_res(m, 24, 8) {}
+linux_file_system_t::linux_file_system_t(mem_t &mem) : m(mem), m_res(m, 256, 64) {}
 
 file_handle_t *file_system_t::open(const char *filename, file_mode_t mode) {
 	linux_file_system_t &me = *(linux_file_system_t*)this;

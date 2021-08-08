@@ -19,10 +19,15 @@ private:
 	uptr m_cur, m_size;
 
 	ubool resize(uptr newSize) {
+    (void)newSize;
+    log_warning("Ran out of buffer size!");
+    return false;
+
+#if 0 // Broken code
 		T *newBuf;
 
 		try {
-			newBuf = (T*)m_m.alloc(newSize*(sizeof(T) * sizeof(ubool)));
+			newBuf = (T*)m_m.alloc(newSize*(sizeof(T) + sizeof(ubool)));
 		} catch (const log_except_t &err) {
 			log_warning("Failed to resize buffers: %s", err.str());
 			return false;
@@ -31,6 +36,7 @@ private:
 		ubool *newActive = (ubool*)(newBuf+newSize);
 
 		memcpy((void*)newBuf, m_buf, m_size*sizeof(T));
+    memset((void*)(newBuf+m_size), 0, m_size*sizeof(T));
 		
 		memcpy(newActive, m_active, m_size*sizeof(ubool));
 		memset(newActive+m_size, 0, (newSize - m_size)*sizeof(ubool));
@@ -42,6 +48,7 @@ private:
 		m_size = newSize;
 
 		return true;
+#endif
 	}
 
 	uptr cur() {
