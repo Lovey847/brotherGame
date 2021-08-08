@@ -5,7 +5,7 @@
 
 // Game player properties
 static constexpr f32 PLAYER_GRAVITY = -0.15f;
-static constexpr vec4 PLAYER_BBOX = vec4(32.f, 64.f, 32.f, 0.f);
+static constexpr vec4 PLAYER_BBOX = vec4(48.f, 64.f, 48.f, 0.f);
 static constexpr f32 PLAYER_SPD = 4.f;
 static constexpr f32 PLAYER_MAXFALL = -10.f;
 static constexpr f32 PLAYER_JUMPHEIGHT = 5.f;
@@ -114,8 +114,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set initial position and direction
-	m_state->player.pos = vec4(4096.f, 4032.f, 4096.f, 1.f);
-  m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
+	m_state->player.pos = m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
   m_state->yaw = (f32)M_PI*0.5f;
   m_state->pitch = 0.f;
 
@@ -204,6 +203,20 @@ static ubool cubesIntersect(const map_cube_t &a, const map_cube_t &b) {
 game_update_ret_t game_t::update() {
   if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
+  // If we're colliding with a loading zone, load that map into memory
+  map_cube_t pos;
+
+  pos.min = m_state->player.pos;
+  pos.max = m_state->player.pos+PLAYER_BBOX;
+
+  if (cubesIntersect(m_state->map.prevLoad, pos)) {
+    if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->map.prevLoad.map))
+      throw log_except("Cannot load previous map!");
+  } else if (cubesIntersect(m_state->map.nextLoad, pos)) {
+    if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->map.nextLoad.map))
+      throw log_except("Cannot load next map!");
+  }
+
   m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
   m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
 
@@ -236,23 +249,19 @@ game_update_ret_t game_t::update() {
   // Clamp to maximum falling speed
   if (m_state->player.vspeed < PLAYER_MAXFALL) m_state->player.vspeed = PLAYER_MAXFALL;
 
-  offset.f[1] += m_state->player.vspeed;
+  offset.f[1] = m_state->player.vspeed;
 
   // Collision detection
-  map_cube_t pos;
-
-  pos.min = m_state->player.pos;
-  pos.max = m_state->player.pos+PLAYER_BBOX;
-
   pos.min.f[0] += offset.f[0];
   pos.max.f[0] += offset.f[0];
 
   for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
     if (cubesIntersect(m_state->map.cubes[i], pos)) {
-      if (offset.f[0] >= 0.f) offset.f[0] += m_state->map.cubes[i].min.f[0]-pos.max.f[0];
-      else offset.f[0] += m_state->map.cubes[i].max.f[0]-pos.min.f[0];
+      if (offset.f[0] >= 0.f)
+        pos.min.f[0] = m_state->map.cubes[i].min.f[0]-PLAYER_BBOX.f[0];
+      else
+        pos.min.f[0] = m_state->map.cubes[i].max.f[0];
 
-      pos.min.f[0] = m_state->player.pos.f[0]+offset.f[0];
       pos.max.f[0] = pos.min.f[0]+PLAYER_BBOX.f[0];
     }
   }
@@ -262,10 +271,11 @@ game_update_ret_t game_t::update() {
 
   for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
     if (cubesIntersect(m_state->map.cubes[i], pos)) {
-      if (offset.f[2] >= 0.f) offset.f[2] += m_state->map.cubes[i].min.f[2]-pos.max.f[2];
-      else offset.f[2] += m_state->map.cubes[i].max.f[2]-pos.min.f[2];
+      if (offset.f[2] >= 0.f)
+        pos.min.f[2] = m_state->map.cubes[i].min.f[2]-PLAYER_BBOX.f[2];
+      else
+        pos.min.f[2] = m_state->map.cubes[i].max.f[2];
 
-      pos.min.f[2] = m_state->player.pos.f[2]+offset.f[2];
       pos.max.f[2] = pos.min.f[2]+PLAYER_BBOX.f[2];
     }
   }
@@ -279,17 +289,16 @@ game_update_ret_t game_t::update() {
       // Any vertical collision brings our vspeed to a halt
       m_state->player.vspeed = 0.f;
 
-      if (offset.f[1] >= 0.f) offset.f[1] += m_state->map.cubes[i].min.f[1]-pos.max.f[1];
+      if (offset.f[1] >= 0.f)
+        pos.min.f[1] = m_state->map.cubes[i].min.f[1]-PLAYER_BBOX.f[1];
       else {
-        offset.f[1] += m_state->map.cubes[i].max.f[1]-pos.min.f[1];
+        pos.min.f[1] = m_state->map.cubes[i].max.f[1];
 
         // Only downwards vertical collisions signify we're on the ground
         m_state->player.onGround = true;
       }
 
-      pos.min.f[1] = m_state->player.pos.f[1]+offset.f[1];
       pos.max.f[1] = pos.min.f[1]+PLAYER_BBOX.f[1];
-
     }
   }
 
@@ -297,6 +306,7 @@ game_update_ret_t game_t::update() {
 
   // Set camera position based on player position
   m_state->pos = m_state->player.pos + PLAYER_BBOX*0.5f;
+  m_state->pos.f[1] += PLAYER_BBOX.f[1]*0.125f;
 
   return GAME_UPDATE_CONTINUE;
 }
@@ -424,6 +434,10 @@ game_update_ret_t game_t::update() {
   // Align cubePos to grid
   cubePos =
     vec4_ivec4(ivec4_vec4(cubePos/m_state->blockGrid))*m_state->blockGrid;
+
+  // Adjust cube position slightly (for instructions)
+  if (m_i.input.k.down[KEYC_M_MIDDLE])
+    cubePos.f[2] -= 0.25f;
 
   // Add & remove cubes
   if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->curMap->cubeCount < 255)) ++m_state->curMap->cubeCount;

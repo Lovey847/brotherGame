@@ -125,6 +125,7 @@ ubool gl_render_t::render(game_state_render_t &state) {
     }
 
     // Load map
+    m_buf.clearBaseVerts();
     for (uptr i = 0; i < state.game->map.cubeCount; ++i)
       m_buf.addCube(m_texture, state.game->map.cubes[i]);
 
