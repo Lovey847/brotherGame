@@ -33,6 +33,8 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
   // Free previous map atlas
   if (atlasEnt[ATLAS_LEVEL] != PAK_INVALID_ENTRY) p.unmapEntry(atlasEnt[ATLAS_LEVEL]);
 
+#ifndef GAME_STATE_EDITOR
+
   // Load map atlas
   atlasEnt[ATLAS_LEVEL] = p.getEntry(state.map.levelAtlas);
   if (atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
@@ -48,23 +50,40 @@ static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlas
     return false;
   }
 
-#ifdef GAME_STATE_EDITOR
+#else
 
-  // Load map into editor
-  if (state.map.cubeCount >= 255) {
-    log_warning("Cannot load map into editor!");
+  // Load map atlas
+  atlasEnt[ATLAS_LEVEL] = p.getEntry(state.curMap->prop->atlas);
+  if (atlasEnt[ATLAS_LEVEL] == PAK_INVALID_ENTRY) {
+    log_warning("Cannot find level atlas!");
     state.map.free(m);
-    p.unmapEntry(atlasEnt[ATLAS_LEVEL]);
     return false;
   }
 
-  state.curMap->cubeCount = state.map.cubeCount;
+  state.r.atlas[ATLAS_LEVEL] = (atlas_t*)p.mapEntry(atlasEnt[ATLAS_LEVEL]);
+  if (!state.r.atlas[ATLAS_LEVEL]) {
+    log_warning("Cannot map level atlas!");
+    state.map.free(m);
+    return false;
+  }
 
-  for (uptr i = 0; i < state.map.cubeCount; ++i)
-    state.curMap->cubes[i] = state.map.cubes[i];
+  // If map is empty, load map into editor
+  if (state.curMap->cubeCount == 0) {
+    if (state.map.cubeCount >= 255) {
+      log_warning("Cannot load map into editor!");
+      state.map.free(m);
+      p.unmapEntry(atlasEnt[ATLAS_LEVEL]);
+      return false;
+    }
 
-  state.curMap->prevLoad = state.map.prevLoad;
-  state.curMap->nextLoad = state.map.nextLoad;
+    state.curMap->cubeCount = state.map.cubeCount;
+
+    for (uptr i = 0; i < state.map.cubeCount; ++i)
+      state.curMap->cubes[i] = state.map.cubes[i];
+
+    state.curMap->prevLoad = state.map.prevLoad;
+    state.curMap->nextLoad = state.map.nextLoad;
+  }
 
   // Free map, we don't need it
   state.map.free(m);
@@ -88,7 +107,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set initial position and direction
-	m_state->pos = vec4(1024.f, 1024.f, 1024.f, 1.f);
+	m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
   m_state->yaw = (f32)M_PI*0.5f;
   m_state->pitch = 0.f;
 
@@ -125,7 +144,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
 
   // Load editor maps
-  for (uptr i = 0; i < GAME_STATE_MAPCOUNT; ++i) {
+  for (uptr i = GAME_STATE_MAPCOUNT; i--;) {
     m_state->curMap = m_state->maps+i;
     m_state->curMap->prop = game_state_maps+i;
 
@@ -202,10 +221,15 @@ game_update_ret_t game_t::update() {
 	if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
   // Change map
-  if (m_i.input.k.pressed[KEYC_LEFT] && (m_state->curMap < m_state->maps+GAME_STATE_MAPCOUNT-1))
+  if (m_i.input.k.pressed[KEYC_RIGHT] && (m_state->curMap < m_state->maps+GAME_STATE_MAPCOUNT-1)) {
     ++m_state->curMap;
-  else if (m_i.input.k.pressed[KEYC_RIGHT] && (m_state->curMap > m_state->maps))
+    if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->curMap->prop->hashName))
+      throw log_except("Cannot load map into editor!");
+  } else if (m_i.input.k.pressed[KEYC_LEFT] && (m_state->curMap > m_state->maps)) {
     --m_state->curMap;
+    if (!loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, m_state->curMap->prop->hashName))
+      throw log_except("Cannot load map into editor!");
+  }
 
   m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
   m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;

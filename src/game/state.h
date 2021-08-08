@@ -53,7 +53,7 @@ static constexpr uptr GAME_STATE_MAPCOUNT = 2;
 static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   {
     "../gen/data/files/maps/000.map",
-    str_hash("maps/000.map"),
+    str_hash("maps/blank.map"),
     0, str_hash("maps/001.map"),
     str_hash("atlases/000.atl"),
     {
@@ -65,15 +65,14 @@ static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   },
   {
     "../gen/data/files/maps/001.map",
-    str_hash("maps/001.map"),
+    str_hash("maps/blank.map"),
     str_hash("maps/000.map"), str_hash("maps/002.map"),
-    str_hash("atlases/000.atl"),
+    str_hash("atlases/global.atl"),
     {
-      str_hash("gray"),
-      str_hash("tutorial"),
-      str_hash("wood"),
+      str_hash("prevLoad"),
+      str_hash("nextLoad"),
     },
-    3,
+    2,
   },
 };
 
