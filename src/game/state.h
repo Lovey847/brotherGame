@@ -1,7 +1,7 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
-#define GAME_STATE_EDITOR
+//#define GAME_STATE_EDITOR
 
 #include "types.h"
 #include "atlas.h"
@@ -66,13 +66,14 @@ static const game_state_map_prop_t game_state_maps[GAME_STATE_MAPCOUNT] = {
   {
     "../gen/data/files/maps/001.map",
     str_hash("maps/blank.map"),
-    str_hash("maps/000.map"), str_hash("maps/002.map"),
-    str_hash("atlases/global.atl"),
+    str_hash("maps/000.map"), 0,
+    str_hash("atlases/000.atl"),
     {
-      str_hash("prevLoad"),
-      str_hash("nextLoad"),
+      str_hash("gray"),
+      str_hash("tutorial"),
+      str_hash("wood"),
     },
-    2,
+    3,
   },
 };
 
@@ -99,6 +100,15 @@ struct game_state_render_t {
   const atlas_t *atlas[ATLAS_COUNT];
 };
 
+// Game player
+struct game_state_player_t {
+  vec4 pos; // Bottom of player
+
+  f32 vspeed; // Current vspeed
+
+  ubool onGround; // Is the player currently on the ground?
+};
+
 // Game state struct
 struct game_state_t {
   game_state_win_t w; // Window state
@@ -107,12 +117,15 @@ struct game_state_t {
   // Game map
   map_t map;
 
+  // Player
+  game_state_player_t player;
+
   vec4 pos;
 
   f32 fovy; // Vertical field of view
 
-  f32 yaw; // Player camera yaw
-  f32 pitch; // Player camera pitch
+  f32 yaw; // Camera yaw
+  f32 pitch; // Camera pitch
 
   // Map editor state
 #ifdef GAME_STATE_EDITOR

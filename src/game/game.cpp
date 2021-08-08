@@ -3,6 +3,13 @@
 
 #include <math.h>
 
+// Game player properties
+static constexpr f32 PLAYER_GRAVITY = -0.15f;
+static constexpr vec4 PLAYER_BBOX = vec4(32.f, 64.f, 32.f, 0.f);
+static constexpr f32 PLAYER_SPD = 4.f;
+static constexpr f32 PLAYER_MAXFALL = -10.f;
+static constexpr f32 PLAYER_JUMPHEIGHT = 5.f;
+
 // Load map into game and renderer
 static ubool loadMap(mem_t &m, pak_t &p, game_state_t &state, pak_entry_t *atlasEnt, str_hash_t mapName) {
   // Load map into renderer
@@ -107,7 +114,8 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set initial position and direction
-	m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
+	m_state->player.pos = vec4(4096.f, 4032.f, 4096.f, 1.f);
+  m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
   m_state->yaw = (f32)M_PI*0.5f;
   m_state->pitch = 0.f;
 
@@ -183,6 +191,116 @@ game_t::~game_t() {
 }
 
 #ifndef GAME_STATE_EDITOR
+
+static ubool cubesIntersect(const map_cube_t &a, const map_cube_t &b) {
+  return !((a.min.f[0] >= b.max.f[0]) ||
+           (a.min.f[1] >= b.max.f[1]) ||
+           (a.min.f[2] >= b.max.f[2]) ||
+           (b.min.f[0] >= a.max.f[0]) ||
+           (b.min.f[1] >= a.max.f[1]) ||
+           (b.min.f[2] >= a.max.f[2]));
+}
+
+game_update_ret_t game_t::update() {
+  if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
+
+  m_state->yaw += (f32)((i32)m_state->w.width/2-m_i.input.mx)*0.005f;
+  m_state->pitch += (f32)((i32)m_state->w.height/2-m_i.input.my)*0.005f;
+
+  while (m_state->yaw < 0.f) m_state->yaw += (f32)M_PI*2.f;
+  while (m_state->yaw > (f32)M_PI*2.f) m_state->yaw -= (f32)M_PI*2.f;
+
+  if (m_state->pitch < -(f32)M_PI/2.f) m_state->pitch = -(f32)M_PI/2.f;
+  else if (m_state->pitch > (f32)M_PI/2.f) m_state->pitch = (f32)M_PI/2.f;
+
+  const f32 c = cosf(m_state->yaw);
+  const f32 s = sinf(m_state->yaw);
+
+  const vec4 forward = vec4(c, 0.f, s, 0.f);
+  const vec4 left = vec4(-s, 0.f, c, 0.f);
+
+  // Move player around
+  vec4 offset = vec4(0.f);
+
+  if (m_i.input.k.down[KEYC_W]) offset += forward*PLAYER_SPD;
+  if (m_i.input.k.down[KEYC_S]) offset -= forward*PLAYER_SPD;
+  if (m_i.input.k.down[KEYC_A]) offset += left*PLAYER_SPD;
+  if (m_i.input.k.down[KEYC_D]) offset -= left*PLAYER_SPD;
+
+  // We can only jump if we're on the ground
+  if (m_i.input.k.pressed[KEYC_SPACE] && m_state->player.onGround) m_state->player.vspeed = PLAYER_JUMPHEIGHT;
+
+  // Apply gravity
+  m_state->player.vspeed += PLAYER_GRAVITY;
+
+  // Clamp to maximum falling speed
+  if (m_state->player.vspeed < PLAYER_MAXFALL) m_state->player.vspeed = PLAYER_MAXFALL;
+
+  offset.f[1] += m_state->player.vspeed;
+
+  // Collision detection
+  map_cube_t pos;
+
+  pos.min = m_state->player.pos;
+  pos.max = m_state->player.pos+PLAYER_BBOX;
+
+  pos.min.f[0] += offset.f[0];
+  pos.max.f[0] += offset.f[0];
+
+  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
+    if (cubesIntersect(m_state->map.cubes[i], pos)) {
+      if (offset.f[0] >= 0.f) offset.f[0] += m_state->map.cubes[i].min.f[0]-pos.max.f[0];
+      else offset.f[0] += m_state->map.cubes[i].max.f[0]-pos.min.f[0];
+
+      pos.min.f[0] = m_state->player.pos.f[0]+offset.f[0];
+      pos.max.f[0] = pos.min.f[0]+PLAYER_BBOX.f[0];
+    }
+  }
+
+  pos.min.f[2] += offset.f[2];
+  pos.max.f[2] += offset.f[2];
+
+  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
+    if (cubesIntersect(m_state->map.cubes[i], pos)) {
+      if (offset.f[2] >= 0.f) offset.f[2] += m_state->map.cubes[i].min.f[2]-pos.max.f[2];
+      else offset.f[2] += m_state->map.cubes[i].max.f[2]-pos.min.f[2];
+
+      pos.min.f[2] = m_state->player.pos.f[2]+offset.f[2];
+      pos.max.f[2] = pos.min.f[2]+PLAYER_BBOX.f[2];
+    }
+  }
+
+  pos.min.f[1] += offset.f[1];
+  pos.max.f[1] += offset.f[1];
+
+  m_state->player.onGround = false;
+  for (uptr i = 0; i < m_state->map.cubeCount; ++i) {
+    if (cubesIntersect(m_state->map.cubes[i], pos)) {
+      // Any vertical collision brings our vspeed to a halt
+      m_state->player.vspeed = 0.f;
+
+      if (offset.f[1] >= 0.f) offset.f[1] += m_state->map.cubes[i].min.f[1]-pos.max.f[1];
+      else {
+        offset.f[1] += m_state->map.cubes[i].max.f[1]-pos.min.f[1];
+
+        // Only downwards vertical collisions signify we're on the ground
+        m_state->player.onGround = true;
+      }
+
+      pos.min.f[1] = m_state->player.pos.f[1]+offset.f[1];
+      pos.max.f[1] = pos.min.f[1]+PLAYER_BBOX.f[1];
+
+    }
+  }
+
+  m_state->player.pos = pos.min;
+
+  // Set camera position based on player position
+  m_state->pos = m_state->player.pos + PLAYER_BBOX*0.5f;
+
+  return GAME_UPDATE_CONTINUE;
+}
+
 #else // GAME_STATE_EDITOR
 
 static void writeMap(file_handle_t &out, game_state_t &state) {

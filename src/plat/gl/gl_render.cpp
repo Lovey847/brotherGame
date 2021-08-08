@@ -98,7 +98,7 @@ gl_render_t::gl_render_t(mem_t &m, const game_state_t &s, u32 width, u32 height)
   m_projDist = 1.f/tanf(s.fovy*0.5f);
 
   // Near clipping plane distance
-  static const f32 nearClip = 16.f;
+  static const f32 nearClip = 8.f;
 
   // Far clipping plane distance
   static const f32 farClip = 2048.f;
