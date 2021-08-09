@@ -22,4 +22,8 @@ I know in 3D games you're not really supposed to use texture atlases, but I was 
 
 Feel free to fork if, for some reason, you wanna make any modifications! (Such as an SDL platform layer or something)
 
+I know that I can build this on my machine, I have no guarantee you'll be able to build this on your machine, even if it's the target platform. Even if you're able to build, I've done no testing and have no guarantee it'll work on any other machine but mine.
+
+Yeah, I know that I'm doing "!m_state->r.atlas" in game/game.cpp, which is an array and will always evaluate to true, but I can't really be bothered to fix it.
+
 Not accepting any pull requests.
