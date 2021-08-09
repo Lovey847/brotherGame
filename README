@@ -1,0 +1,25 @@
+===================
+    brotherGame
+===================
+
+This is a game I made for my little brother roughly a week before his birthday.
+
+That being said, this code is very messy since I didn't have enough time to make it nice.
+
+This was built on top of a framework I had written previously for writing games, I don't think it's very good though.
+
+There are a lot of TODO's that I'm not gonna bother with, as I plan on writing a more data-oriented framework for games.
+
+There is only a linux X11 OpenGL platform layer, I have an ALSA audio layer but it's unused since I never implemented any audio state.
+
+This repository comes with the game data, which is automatically built by 2 generators in the CMake build system.
+
+This repository also comes with tons of unused source files, such as linux_pak and linux_save, back when I didn't wanna assume the target platform had a filesystem.
+
+The atlases come with an alpha component despite the renderer not having any alpha blending.
+
+I know in 3D games you're not really supposed to use texture atlases, but I was familiar with them and only had a week to write this so I sacrificed mipmapping to write it faster.
+
+Feel free to fork if, for some reason, you wanna make any modifications! (Such as an SDL platform layer or something)
+
+Not accepting any pull requests.
