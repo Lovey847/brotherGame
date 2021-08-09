@@ -6,6 +6,8 @@ This is a game I made for my little brother roughly a week before his birthday.
 
 That being said, this code is very messy since I didn't have enough time to make it nice.
 
+Indentation is all over the place since when I wrote this framework, I had used tabs the size of 4-spaces, but now I use 2 actual spaces for tabs.
+
 This was built on top of a framework I had written previously for writing games, I don't think it's very good though.
 
 There are a lot of TODO's that I'm not gonna bother with, as I plan on writing a more data-oriented framework for games.
