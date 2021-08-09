@@ -36,7 +36,7 @@ wood
 256
 256
 ../data/files/atlases/001.atl
-4
+7
 atlases/001.bmp
 gray
 1
@@ -58,3 +58,18 @@ wood
 1
 256
 256
+final
+1
+662
+254
+254
+ending
+257
+662
+254
+254
+amulet
+513
+662
+254
+254

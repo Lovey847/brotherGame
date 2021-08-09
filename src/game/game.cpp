@@ -114,7 +114,8 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   m_state->r.game = m_state;
 
   // Set initial position and direction
-	m_state->player.pos = m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
+	m_state->pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
+  m_state->player.pos = m_state->pos-PLAYER_BBOX*0.5f;
   m_state->yaw = (f32)M_PI*0.5f;
   m_state->pitch = 0.f;
 
@@ -203,6 +204,13 @@ static ubool cubesIntersect(const map_cube_t &a, const map_cube_t &b) {
 game_update_ret_t game_t::update() {
   if (m_i.input.k.pressed[KEYC_ESCAPE]) return GAME_UPDATE_CLOSE;
 
+  // If the player fell out of bounds, put the player back in bounds
+  if (m_state->player.pos.f[1] < 0.f) {
+    m_state->player.pos = vec4(4096.f, 4096.f, 4096.f, 1.f);
+    m_state->player.vspeed = 0.f;
+    loadMap(m_i.mem, m_pak, *m_state, m_atlasEnt, str_hash("maps/000.map"));
+  }
+
   // If we're colliding with a loading zone, load that map into memory
   map_cube_t pos;
 
@@ -250,6 +258,14 @@ game_update_ret_t game_t::update() {
   if (m_state->player.vspeed < PLAYER_MAXFALL) m_state->player.vspeed = PLAYER_MAXFALL;
 
   offset.f[1] = m_state->player.vspeed;
+
+  // DEBUG: Fly
+#if 0
+  if (m_i.input.k.down[KEYC_LCTRL]) {
+    offset.f[1] = PLAYER_JUMPHEIGHT;
+    offset *= 3.f;
+  }
+#endif
 
   // Collision detection
   pos.min.f[0] += offset.f[0];
@@ -438,6 +454,18 @@ game_update_ret_t game_t::update() {
   // Adjust cube position slightly (for instructions)
   if (m_i.input.k.down[KEYC_M_MIDDLE])
     cubePos.f[2] -= 0.25f;
+
+  // Set size exactly to player size
+  if (m_i.input.k.pressed[KEYC_F5]) {
+    m_state->blockSize = vec4(40.f/8.f, 64.f/8.f, 40.f/8.f, 0.f);
+    m_state->blockGrid = vec4(8.f, 8.f, 8.f, 1.f);
+  }
+
+  // Set size to initial cube size
+  else if (m_i.input.k.pressed[KEYC_F6]) {
+    m_state->blockSize = vec4(1.f, 1.f, 1.f, 0.f);
+    m_state->blockGrid = vec4(64.f, 64.f, 64.f, 1.f);
+  }
 
   // Add & remove cubes
   if (m_i.input.k.pressed[KEYC_M_PRIMARY] && (m_state->curMap->cubeCount < 255)) ++m_state->curMap->cubeCount;

@@ -3,4 +3,9 @@ atlases/000.atl
 atlases/001.atl
 maps/000.map
 maps/001.map
+maps/002.map
+maps/003.map
+maps/004.map
+maps/005.map
+maps/006.map
 maps/blank.map
