@@ -41,7 +41,7 @@ struct pak_ptr_t {
   FINLINE operator T*() {return (T*)((u8*)this+ptr);}
   FINLINE operator const T*() const {return (const T*)((u8*)this+ptr);}
   FINLINE T *operator->() {return (T*)((u8*)this+ptr);}
-  FINLINE T *operator[](int i) {return *((T*)this + i);}
+  FINLINE T &operator[](int i) {return ((T*)((u8*)this+ptr))[i];}
 
   // Implicit overload for void*
   FINLINE operator void*() {return (void*)((u8*)this+ptr);}

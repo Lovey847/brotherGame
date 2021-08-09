@@ -139,7 +139,7 @@ game_t::game_t(interfaces_t &i, const args_t &args) :
   }
 
   m_state->r.atlas[ATLAS_GLOBAL] = (atlas_t*)m_pak.mapEntry(m_atlasEnt[ATLAS_GLOBAL]);
-  if (!m_state->r.atlas) {
+  if (!m_state->r.atlas[ATLAS_GLOBAL]) {
     m_i.mem.free(m_state);
     throw log_except("Cannot map atlases/global.atl!");
   }
